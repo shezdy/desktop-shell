@@ -1,5 +1,6 @@
-import { App, Gdk, Widget } from "../imports.js";
-import PopupWindow from "./PopupWindow.js";
+import { App, Astal } from "astal/gtk3";
+import { Gdk, Widget } from "../imports.js";
+import PopupWindow, { closePopupWindow } from "./PopupWindow.js";
 
 const WINDOW_NAME = "confirm";
 
@@ -7,13 +8,15 @@ let action = () => {};
 
 export function ConfirmAction(fun) {
   action = fun;
-  App.openWindow("confirm");
+  App.get_window("confirm").visible = true;
 }
 
 export default () =>
   PopupWindow({
     name: WINDOW_NAME,
-    layer: "overlay",
+    layer: Astal.Layer.OVERLAY,
+    exclusivity: Astal.Exclusivity.IGNORE,
+    keymode: Astal.Keymode.ON_DEMAND,
     child: Widget.Box({
       vertical: true,
       className: "confirm",
@@ -33,35 +36,35 @@ export default () =>
           vexpand: true,
           children: [
             Widget.Button({
-              child: Widget.Label("No"),
-              onClicked: () => App.closeWindow("confirm"),
+              child: Widget.Label({ label: "No" }),
+              onClicked: () => closePopupWindow(WINDOW_NAME),
               hexpand: true,
               setup: (self) => {
                 self
-                  .on("enter-notify-event", (self) => {
+                  .hook(self, "enter-notify-event", (self) => {
                     self.grab_focus();
                   })
-                  .on("map", (self) => {
+                  .hook(self, "map", (self) => {
                     self.grab_focus();
                   });
               },
             }),
             Widget.Button({
-              child: Widget.Label("Yes"),
+              child: Widget.Label({ label: "Yes" }),
               onClicked: () => {
                 action();
-                App.closeWindow("confirm");
+                closePopupWindow(WINDOW_NAME);
               },
               hexpand: true,
               setup: (self) => {
-                self.on("enter-notify-event", (self) => {
+                self.hook(self, "enter-notify-event", (self) => {
                   self.grab_focus();
                 });
               },
             }),
           ],
           setup: (self) => {
-            self.on("key-press-event", (self, event) => {
+            self.hook(self, "key-press-event", (self, event) => {
               const key = event.get_keyval()[1];
               switch (key) {
                 case Gdk.KEY_y:
@@ -72,11 +75,13 @@ export default () =>
                 case Gdk.KEY_N:
                   self.children[0].grab_focus();
                   return true;
+                case Gdk.KEY_Escape:
+                  self.close();
+                  return true;
                 default:
                   return false;
               }
             });
-            self.keybind("Escape", () => App.closeWindow(WINDOW_NAME));
           },
         }),
       ],

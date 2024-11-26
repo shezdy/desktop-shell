@@ -9,20 +9,29 @@ export default (monitor) => {
   const ExtraWorkspaceButton = (id) =>
     Widget.Button({
       className: "extra-button",
-      onClicked: () => Hyprland.messageAsync(`dispatch focusworkspaceoncurrentmonitor ${id}`),
-      onSecondaryClick: () => Hyprland.messageAsync(`dispatch movetoworkspacesilent ${id}`),
+      onClick: (self, event) => {
+        switch (event.button) {
+          case 1:
+            Hyprland.message_async(`dispatch focusworkspaceoncurrentmonitor ${id}`, null);
+            break;
+          case 3:
+            Hyprland.message_async(`dispatch movetoworkspacesilent ${id}`, null);
+            break;
+        }
+      },
       child: Widget.Label({
         label: `${id}`,
       }),
       attribute: { id },
       setup: (self) => {
-        const update = () => {
-          self.toggleClassName("active", Hyprland.getMonitor(monitor)?.activeWorkspace.id === id);
-        };
+        self.toggleClassName("active", Hyprland.get_monitor(monitor)?.activeWorkspace.id === id);
 
-        self
-          .hook(Hyprland, update, "notify::monitors")
-          .hook(Hyprland, update, "notify::workspaces");
+        self.hook(Hyprland, "notify::focused-workspace", () => {
+          if (Hyprland.focusedWorkspace.monitor.id === monitor) {
+            self.toggleClassName("active", Hyprland.focusedWorkspace.id === id);
+            // print(`${Hyprland.focusedWorkspace.id === id} active`);
+          }
+        });
       },
     });
 
@@ -44,8 +53,8 @@ export default (monitor) => {
         newButton.show_all();
       };
 
-      for (const ws of Hyprland.workspaces) {
-        if (ws.monitorID !== monitor) continue;
+      for (const ws of Hyprland.get_workspaces()) {
+        if (ws.monitor.id !== monitor) continue;
 
         const id = ws.id;
 
@@ -55,58 +64,43 @@ export default (monitor) => {
       }
 
       self
-        .hook(
-          Hyprland,
-          (_, e, data) => {
-            if (e === "moveworkspace") {
-              const values = data.split(",");
-              const id = parseInt(values[0]);
-              if (
-                ((id < min && id > 0) || id > max) &&
-                Hyprland.getWorkspace(id)?.monitorID === monitor
-              ) {
-                if (!self.children.find((c) => c.attribute.id === id)) {
-                  addExtraWorkspaceButton(id);
-                }
-              } else {
-                self.children.find((c) => c.attribute.id === id)?.destroy();
-              }
-            } else if (e === "workspace") {
-              const id = parseInt(data);
-              if (
-                ((id < min && id > 0) || id > max) &&
-                Hyprland.getWorkspace(id)?.monitorID === monitor
-              ) {
-                if (!self.children.find((c) => c.attribute.id === id)) {
-                  addExtraWorkspaceButton(id);
-                }
-              } else {
-                self.children.find((c) => c.attribute.id === id)?.destroy();
-              }
-            }
-          },
-          "event",
-        )
-        .hook(
-          Hyprland,
-          (_, id) => {
+        .hook(Hyprland, "event", (_, e, data) => {
+          if (e === "moveworkspacev2") {
+            const values = data.split(",");
+            const id = parseInt(values[0]);
             if (
-              id &&
-              Hyprland.getWorkspace(id)?.monitorID === monitor &&
-              ((id < min && id > 0) || id > max)
+              ((id < min && id > 0) || id > max) &&
+              Hyprland.get_workspace(id)?.monitor?.id === monitor
             ) {
+              if (!self.children.find((c) => c.attribute.id === id)) {
+                addExtraWorkspaceButton(id);
+              }
+            } else {
+              self.children.find((c) => c.attribute.id === id)?.destroy();
+            }
+          }
+        })
+        .hook(Hyprland, "notify::focused-workspace", () => {
+          const id = Hyprland.focusedWorkspace.id;
+          if (
+            ((id < min && id > 0) || id > max) &&
+            Hyprland.get_workspace(id)?.monitor?.id === monitor
+          ) {
+            if (!self.children.find((c) => c.attribute.id === id)) {
               addExtraWorkspaceButton(id);
             }
-          },
-          "workspace-added",
-        )
-        .hook(
-          Hyprland,
-          (_, id) => {
-            self.children.find((c) => c.attribute.id === parseInt(id))?.destroy();
-          },
-          "workspace-removed",
-        );
+          } else {
+            self.children.find((c) => c.attribute.id === id)?.destroy();
+          }
+        })
+        .hook(Hyprland, "workspace-added", (_, ws) => {
+          if (ws && ws?.monitor?.id === monitor && ((ws.id < min && ws.id > 0) || ws.id > max)) {
+            addExtraWorkspaceButton(ws.id);
+          }
+        })
+        .hook(Hyprland, "workspace-removed", (_, id) => {
+          self.children.find((c) => c.attribute.id === parseInt(id))?.destroy();
+        });
     },
   });
 
@@ -120,16 +114,25 @@ export default (monitor) => {
             Widget.Box({
               homogeneous: true,
               className: "ws-box",
+              hexpand: false,
               children: Array.from({ length: numWorkspaces }, (_, i) => i + min).map((i) =>
                 Widget.Button({
                   className: "ws-button",
-                  onClicked: () =>
-                    Hyprland.messageAsync(`dispatch focusworkspaceoncurrentmonitor ${i}`),
-                  onSecondaryClick: () =>
-                    Hyprland.messageAsync(`dispatch movetoworkspacesilent ${i}`),
+                  hexpand: false,
+                  onClick: (self, event) => {
+                    switch (event.button) {
+                      case 1:
+                        Hyprland.message(`dispatch focusworkspaceoncurrentmonitor ${i}`);
+                        break;
+                      case 3:
+                        Hyprland.message(`dispatch movetoworkspacesilent ${i}`);
+                        break;
+                    }
+                  },
                   child: Widget.Box({
+                    hexpand: false,
                     className: "box",
-                    hpack: "center",
+                    // hpack: "center",
                   }),
                 }),
               ),
@@ -143,13 +146,16 @@ export default (monitor) => {
                       continue;
                     }
                     btn.toggleClassName("active", false);
-                    let occupied = Hyprland.getWorkspace(id)?.windows > 0;
+                    let occupied = Hyprland.get_workspace(id)?.get_clients().length > 0;
                     if (!occupied) {
                       // check for clients in the "minimized" workspace
                       const idString = id.toString();
-                      for (const ws of Hyprland.workspaces) {
-                        if (ws.id > 0) continue;
-                        if (ws.name.match(/\d+$/)?.[0] === idString && ws.windows > 0) {
+                      for (const ws of Hyprland.get_workspaces()) {
+                        if (!ws || ws.id > 0) continue;
+                        if (
+                          ws.name?.match(/\d+$/)?.[0] === idString &&
+                          ws.get_clients().length > 0
+                        ) {
                           occupied = true;
                           break;
                         }
@@ -159,39 +165,33 @@ export default (monitor) => {
                   }
                 };
                 self
-                  .hook(
-                    Hyprland.active.workspace,
-                    () => {
-                      const ws = Hyprland.getWorkspace(Hyprland.active.workspace.id);
-                      if (ws?.monitorID === monitor || (ws.id >= min && ws.id <= max))
-                        update(ws.id);
-                    },
-                    "notify::id",
-                  )
-                  .hook(
-                    Hyprland,
-                    () => update(Hyprland.getMonitor(monitor)?.activeWorkspace.id),
-                    "notify::workspaces",
-                  )
-                  .hook(
-                    Hyprland,
-                    (_, address) => {
-                      if (!address) return;
-                      const wsId = Hyprland.getClient(`${address}`)?.workspace.id;
-                      if (
-                        !wsId ||
-                        wsId === Hyprland.active.workspace.id ||
-                        wsId < min ||
-                        wsId > max
-                      )
-                        return;
+                  .hook(Hyprland, "notify::focused-workspace", () => {
+                    if (
+                      Hyprland.focusedWorkspace &&
+                      (Hyprland.focusedWorkspace.monitor.id === monitor ||
+                        (Hyprland.focusedWorkspace.id >= min &&
+                          Hyprland.focusedWorkspace.id <= max))
+                    )
+                      update(Hyprland.focusedWorkspace.id);
+                  })
+                  .hook(Hyprland, "client-moved", (_, client, ws) => {
+                    if (
+                      Hyprland.focusedWorkspace &&
+                      ws &&
+                      (ws.monitor.id === monitor || (ws.id >= min && ws.id <= max))
+                    )
+                      update(Hyprland.focusedWorkspace.id);
+                  })
+                  .hook(Hyprland, "urgent", (_, address) => {
+                    if (!address) return;
+                    const wsId = Hyprland.get_client(`${address}`)?.workspace?.id;
+                    if (!wsId || wsId === Hyprland.focusedWorkspace.id || wsId < min || wsId > max)
+                      return;
 
-                      self.children[(wsId - 1) % numWorkspaces]?.toggleClassName("urgent", true);
-                    },
-                    "urgent-window",
-                  );
+                    self.children[(wsId - 1) % numWorkspaces]?.toggleClassName("urgent", true);
+                  });
 
-                update(Hyprland.getMonitor(monitor)?.activeWorkspace.id);
+                update(Hyprland.get_monitor(monitor)?.activeWorkspace.id);
               },
             }),
             extraWorkspaces,

@@ -1,6 +1,8 @@
+import { Variable, bind } from "astal";
+import { App, Astal } from "astal/gtk3";
 import { focusClient, getHyprlandClientIcon } from "../helpers/Misc.js";
 import Mutex from "../helpers/Mutex.js";
-import { Gtk, Hyprland, Variable, Widget } from "../imports.js";
+import { Gtk, Hyprland, Widget } from "../imports.js";
 
 const mutex = new Mutex();
 const selectedIndex = Variable(1);
@@ -23,8 +25,8 @@ const syncClientsAndShow = () => {
 
     altTabBox.children = [AltTabFlowbox(clients, 10)];
 
-    if (clients.length === 1) selectedIndex.value = 0;
-    else selectedIndex.value = 1;
+    if (clients.length === 1) selectedIndex.set(0);
+    else selectedIndex.set(1);
 
     altTabBox.parent.visible = true;
     submap = true;
@@ -38,7 +40,7 @@ const focusClientAndHide = async (submapName) => {
   if (submap && submapName === "") {
     submap = false;
     altTabBox.parent.visible = false;
-    focusClient(clients[selectedIndex.value], true);
+    focusClient(clients[selectedIndex.get()], true);
   }
 };
 
@@ -55,8 +57,8 @@ export const cycleNext = (isInitialPress = false) => {
       ignoreCycle = false;
       return;
     }
-    if (selectedIndex.value >= clients.length - 1) selectedIndex.value = 0;
-    else selectedIndex.value += 1;
+    if (selectedIndex.get() >= clients.length - 1) selectedIndex.set(0);
+    else selectedIndex.set(selectedIndex.get() + 1);
   });
 };
 
@@ -64,12 +66,12 @@ const ClientItem = (client, index) => {
   return Widget.Button({
     child: Widget.Box({
       vertical: true,
-      vpack: "center",
+      valign: Gtk.Align.Center,
       children: [
         Widget.Icon({
           className: "icon",
           icon: getHyprlandClientIcon(client),
-          size: 64,
+          css: "font-size: 64px;",
         }),
         Widget.Label({
           className: "title",
@@ -81,9 +83,9 @@ const ClientItem = (client, index) => {
       ],
     }),
     onClicked: () => {
-      selectedIndex.value = index;
+      selectedIndex.set(index);
     },
-    className: selectedIndex.bind().transform((i) => (i === index ? "selected client" : "client")),
+    className: selectedIndex((i) => (i === index ? "selected client" : "client")),
   });
 };
 
@@ -111,8 +113,8 @@ export default () =>
   Widget.Window({
     name: "alttab",
     className: "alt-tab-window",
-    layer: "overlay",
-    keymode: "on-demand",
+    layer: Astal.Layer.OVERLAY,
+    keymode: Astal.Keymode.NONE,
     visible: false,
     child: altTabBox,
   });

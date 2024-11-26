@@ -1,119 +1,137 @@
+import { exec, execAsync } from "astal";
+import { GObject, property, register, signal } from "astal/gobject";
 import { execSh } from "../helpers/Misc.js";
-import { Service, Utils } from "../imports.js";
 import options from "../options.js";
 
-class Screen extends Service {
-  static {
-    Service.register(
-      Screen,
-      {},
-      {
-        name: ["string", "rw"],
-        brightness: ["float", "rw"],
-      },
-    );
-  }
+const Screen = GObject.registerClass(
+  {
+    Properties: {
+      text: GObject.ParamSpec.string(
+        "name",
+        "Name",
+        "Name of Screen",
+        GObject.ParamFlags.READWRITE,
+        "",
+      ),
+      brightness: GObject.ParamSpec.double(
+        "brightness",
+        "Brightness",
+        "Brightness of the screens",
+        GObject.ParamFlags.READWRITE,
+        Number.MIN_SAFE_INTEGER,
+        Number.MAX_SAFE_INTEGER,
+        0,
+      ),
+    },
+    Signals: {
+      changed: {},
+    },
+  },
+  class Screen extends GObject.Object {
+    #name = "";
+    #brightness = 0;
 
-  #name = "";
-  #brightness = 0;
+    get name() {
+      return this.#name;
+    }
 
-  get name() {
-    return this.#name;
-  }
+    get brightness() {
+      return this.#brightness;
+    }
 
-  get brightness() {
-    return this.#brightness;
-  }
+    set brightness(p) {
+      let percent = p;
+      if (p <= 0) percent = 0.01;
 
-  set brightness(p) {
-    let percent = p;
-    if (p <= 0) percent = 0.01;
+      if (p > 1) percent = 1;
 
-    if (p > 1) percent = 1;
+      try {
+        execAsync(`brightnessctl s ${percent * 100}% -d ${this.#name} -q`, () => {
+          this.#brightness = percent;
+          this.notify("brightness");
+          this.emit("changed");
+        });
+      } catch (error) {
+        console.error(`Error setting screens: ${error}`);
+      }
+    }
 
-    Utils.execAsync(`brightnessctl s ${percent * 100}% -d ${this.#name} -q`)
-      .then(() => {
-        this.#brightness = percent;
-        this.notify("brightness");
-        this.emit("changed");
-      })
-      .catch(console.error);
-  }
+    constructor(name, brightness) {
+      super();
+      this.#name = name;
+      this.#brightness = brightness;
+    }
+  },
+);
 
-  constructor(name, brightness) {
-    super();
-    this.#name = name;
-    this.#brightness = brightness;
-  }
-}
+const Brightness = GObject.registerClass(
+  {
+    Properties: {
+      screens: GObject.ParamSpec.jsobject(
+        "screens",
+        "Screens",
+        "Map of all screens",
+        GObject.ParamFlags.READWRITE,
+        undefined,
+      ),
+    },
+  },
+  class Brightness extends GObject.Object {
+    #screens;
 
-class Brightness extends Service {
-  static {
-    Service.register(
-      Brightness,
-      {},
-      {
-        screens: ["jsobject", "rw"],
-      },
-    );
-  }
-
-  #screens;
-
-  async #syncScreens() {
-    try {
-      Utils.execAsync("brightnessctl --class=backlight -l -m")
-        .then((out) => {
+    async #syncScreens() {
+      try {
+        execAsync("brightnessctl --class=backlight -l -m", (out) => {
           for (const screen of out.split("\n")) {
             const info = screen.split(",");
             if (!this.#screens.get(info[0]))
               this.#screens.set(info[0], new Screen(info[0], info[2] / info[4]));
           }
-        })
-        .catch(console.error);
-    } catch (error) {
-      console.error(`Error syncing screens: ${error}`);
+        });
+      } catch (error) {
+        console.error(`Error syncing screens: ${error}`);
+      }
     }
-  }
 
-  get screens() {
-    if (!this.#screens) return undefined;
-    return Array.from(this.#screens.values());
-  }
-
-  set screens(percent) {
-    if (!this.#screens) {
-      execSh(options.fallbackBrightnessCmd(percent * 100));
-      return;
+    get screens() {
+      if (!this.#screens) return undefined;
+      return Array.from(this.#screens.values());
     }
-    this.#syncScreens();
-    for (const [name, screen] of this.#screens) {
-      if (name === "ddcci5") screen.brightness = percent + 0.1;
-      else screen.brightness = percent;
-    }
-    this.notify("screens");
-    this.emit("changed");
-  }
 
-  constructor() {
-    super();
-    try {
-      this.#screens = new Map();
-      const out = Utils.exec("brightnessctl --class=backlight -l -m");
-      if (out.startsWith("Failed")) {
-        this.#screens = undefined;
+    set screens(percent) {
+      if (!this.#screens) {
+        execSh(options.fallbackBrightnessCmd(percent * 100));
         return;
       }
-      for (const screen of out.split("\n")) {
-        const info = screen.split(",");
-        this.#screens.set(info[0], new Screen(info[0], info[2] / info[4]));
+      this.#syncScreens();
+      for (const [name, screen] of this.#screens) {
+        if (name === "ddcci5") screen.brightness = percent + 0.1;
+        else screen.brightness = percent;
       }
-    } catch (error) {
-      console.error(error);
-      this.#screens = undefined;
+      this.notify("screens");
+      this.emit("changed");
     }
-  }
-}
+
+    constructor() {
+      super();
+      try {
+        this.#screens = new Map();
+        const out = exec("brightnessctl --class=backlight -l -m");
+        if (out.startsWith("Failed")) {
+          this.#screens = undefined;
+          return;
+        }
+        for (const screen of out.split("\n")) {
+          const info = screen.split(",");
+          this.#screens.set(info[0], new Screen(info[0], info[2] / info[4]));
+        }
+      } catch (error) {
+        this.#screens = undefined;
+      }
+    }
+  },
+);
+
 const brightness = new Brightness();
 
 export default brightness;

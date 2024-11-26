@@ -1,8 +1,9 @@
+import { App, Astal } from "astal/gtk3";
 import { Notifications, Widget } from "../imports.js";
 import Notification from "./Notification.js";
 
-Notifications.notificationPopupTimeout = 5000;
-Notifications.cacheNotificationActions = true;
+const notificationPopupTimeout = 5000;
+// cacheNotificationActions = true;
 
 const Popups = () =>
   Widget.Box({
@@ -22,11 +23,11 @@ const Popups = () =>
         }
       },
       notify: (box, id) => {
-        const notif = Notifications.getNotification(id);
+        const notif = Notifications.get_notification(id);
 
         if (Notifications.dnd || !notif) return;
 
-        if (box.attribute.map.size === 0) App.openWindow("popupNotifications");
+        if (box.attribute.map.size === 0) App.get_window("popupNotifications").visible = true;
 
         const replace = box.attribute.map.get(id);
 
@@ -45,14 +46,18 @@ const Popups = () =>
           box.pack_start(notification, false, false, 0);
           box.attribute.map.set(id, notification);
         }
+
+        setTimeout(() => {
+          box.attribute.dismiss(box, id);
+        }, notificationPopupTimeout);
       },
     },
 
     setup: (self) => {
       self
-        .hook(Notifications, (box, id) => box.attribute.notify(box, id), "notified")
-        .hook(Notifications, (box, id) => box.attribute.dismiss(box, id), "dismissed")
-        .hook(Notifications, (box, id) => box.attribute.dismiss(box, id, true), "closed");
+        .hook(Notifications, "notified", (box, id) => box.attribute.notify(box, id))
+        .hook(Notifications, "resolved", (box, id) => box.attribute.dismiss(box, id));
+      // .hook(Notifications, (box, id) => box.attribute.dismiss(box, id, true), "closed");
     },
   });
 
@@ -66,8 +71,8 @@ const PopupList = () =>
 export default () =>
   Widget.Window({
     name: "popupNotifications",
-    anchor: ["top", "right"],
+    anchor: Astal.WindowAnchor.TOP | Astal.WindowAnchor.RIGHT,
     child: PopupList(),
-    layer: "overlay",
-    visible: false,
+    layer: Astal.Layer.OVERLAY,
+    visible: true,
   });

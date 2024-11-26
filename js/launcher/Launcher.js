@@ -1,5 +1,7 @@
+import { Variable, bind } from "astal";
+import { App, Astal } from "astal/gtk3";
 import icons from "../icons.js";
-import { App, Applications, Gdk, Gtk, Variable, Widget } from "../imports.js";
+import { Applications, Gdk, Gtk, Widget } from "../imports.js";
 import options from "../options.js";
 import PopupWindow from "../widgets/PopupWindow.js";
 import AppItem from "./AppItem.js";
@@ -9,73 +11,64 @@ const searchTerm = Variable("");
 
 const searchBar = Widget.Entry({
   hexpand: false,
-  primary_icon_name: icons.apps.search,
+  primaryIconName: icons.apps.search,
   setup: (self) => {
     self.grab_focus_without_selecting();
   },
-  text: searchTerm.bind(),
-  on_change: ({ text }) => {
-    searchTerm.value = text;
+  text: searchTerm(),
+  on_changed: ({ text }) => {
+    searchTerm.set(text);
   },
 });
+
+const defaultSortFunc = (a, b) => {
+  if (a.pinIndex < 0 && b.pinIndex >= 0) return 1;
+  if (a.pinIndex >= 0 && b.pinIndex < 0) return -1;
+  return a.pinIndex - b.pinIndex || b.app.frequency - a.app.frequency;
+};
+const searchSortFunc = (a, b) => {
+  return b.score - a.score;
+};
 
 const Applauncher = () => {
   const flowbox = () =>
     Widget.FlowBox({
       className: "app-list",
-      vpack: "start",
-      hpack: "start",
+      valign: Gtk.Align.START,
+      halign: Gtk.Align.START,
       minChildrenPerLine: 5,
       maxChildrenPerLine: 5,
+      selectionMode: Gtk.SelectionMode.BROWSE,
       setup: (self) => {
+        self.set_sort_func(defaultSortFunc);
+
+        const pins = new Map(options.launcher.pins.map((e, i) => [e, i]));
+
+        for (const app of Applications.get_list()) {
+          const pinIndex = pins.get(app.name.toLowerCase());
+          self.add(AppItem(app, pinIndex));
+        }
+
         self.hook(searchTerm, (self) => {
-          if (searchTerm.value.length < 1) {
-            self.get_child_at_index(0).get_child().grab_focus();
-            self.show_all();
+          if (searchTerm.get().length < 1) {
+            self.set_filter_func(null);
+            self.set_sort_func(defaultSortFunc);
+            self.select_child(self.get_child_at_index(0));
+            self.get_child_at_index(0).grab_focus();
             return;
           }
-          for (const item of self.get_children()) {
-            if (item.get_child().app.match(searchTerm.value)) {
-              item.visible = true;
-            } else {
-              item.visible = false;
-            }
+          for (const ch of self.get_children()) {
+            ch.score = Applications.fuzzy_score(searchTerm.get(), ch.app);
           }
-          for (const item of self.get_children()) {
-            if (item.visible) {
-              item.get_child().grab_focus();
-              break;
-            }
-          }
+          self.set_filter_func((ch) => ch.score > 0);
+          self.set_sort_func(searchSortFunc);
+          self.select_child(self.get_child_at_index(0));
+          self.get_child_at_index(0).grab_focus();
         });
 
-        for (const name of options.launcher.pins) {
-          const app = Applications.list.find(
-            (app) => app.name.toLowerCase() === name.toLowerCase(),
-          );
-          if (!app) {
-            console.warn(`Launcher pinned app "${name}" not found`);
-            continue;
-          }
-          self.add(AppItem(app));
-        }
-
-        for (const app of Applications.list.sort((a, b) => {
-          return a.frequency < b.frequency;
-        })) {
-          if (options.launcher.pins.find((name) => name.toLowerCase() === app.name.toLowerCase()))
-            continue;
-          self.add(AppItem(app));
-        }
-
-        // The child is a Gtk.FlowBoxChild, not the button, but we only want to focus the app button
-        // which is the child of the child
-        self.get_child_at_index(0).get_child().grab_focus();
-        // The button is what should grab focus, so disable focus on FlowBoxChild
-        self.get_children().map((child) => {
-          child.can_focus = false;
+        self.hook(self, "child-activated", (self, child) => {
+          child.get_child().activate();
         });
-        self.show_all();
       },
     });
 
@@ -87,16 +80,25 @@ const Applauncher = () => {
       Widget.Scrollable({
         hscroll: "never",
         vscroll: "always",
-        child: Applications.bind().transform(() => flowbox()),
-        setup: (self) =>
-          self.on("map", (self) => {
+        child: bind(Applications, "list").as(() => flowbox()),
+        setup: (self) => {
+          self.hook(searchTerm, () => {
             self.vadjustment.value = self.vadjustment.lower;
-          }),
+          });
+          self.hook(self, "map", () => {
+            self.vadjustment.value = self.vadjustment.lower;
+          });
+        },
       }),
     ],
     setup: (self) => {
-      self.on("map", () => {
-        searchTerm.value = "";
+      self.hook(self, "map", () => {
+        // recreate the list every time the window is opened
+        // Applications.reload();
+        // Applications.notify("list");
+
+        searchTerm.set("");
+        searchBar.grab_focus();
       });
     },
   });
@@ -105,11 +107,14 @@ const Applauncher = () => {
 export default () =>
   PopupWindow({
     name: WINDOW_NAME,
-    transition: "none",
-    layer: "overlay",
+    transition: Gtk.RevealerTransitionType.NONE,
+    layer: Astal.Layer.OVERLAY,
+    keymode: Astal.Keymode.ON_DEMAND,
+    exclusivity: Astal.Exclusivity.IGNORE,
+    location: "center",
     child: Applauncher(),
     setup: (self) => {
-      self.on("key-press-event", (_, event) => {
+      self.hook(self, "key-press-event", (_, event) => {
         const key = event.get_keyval()[1];
         switch (key) {
           case Gdk.KEY_downarrow:
@@ -124,13 +129,15 @@ export default () =>
           case Gdk.KEY_Home:
           case Gdk.KEY_End:
             return false;
+          case Gdk.KEY_Escape:
+            self.close();
+            return true;
           default:
-            if (!searchBar.is_focus) {
+            if (!searchBar.isFocus) {
               searchBar.grab_focus_without_selecting();
             }
             return false;
         }
       });
-      self.keybind("Escape", () => App.closeWindow(WINDOW_NAME));
     },
   });

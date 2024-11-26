@@ -1,13 +1,12 @@
-import { Utils } from "./imports.js";
-
 export default {
-  avatar: `/var/lib/AccountsService/icons/${Utils.USER}`,
+  // TODO: get actual username
+  avatar: "/var/lib/AccountsService/icons/d",
   mpris: {
     // the special name "%any" can be used to match any player not on the list
     // players listed earlier will have more priority, so for example:
     // ["spotify, "%any", "firefox"]
     // will prioritize spotify and deprioritize firefox
-    whitelist: ["spotify"],
+    whitelist: ["spotify", "kasts"],
     // players listed here will be ignored
     blacklist: [],
   },
@@ -17,15 +16,15 @@ export default {
     suspend: `
     playerctl -a pause & 
     ags -q &
-    hyprlock &
+    swaylock -f -c '#151418' &
     pid=$!
-    sleep 0.1
+    sleep 1
     systemctl suspend
     waitpid $pid
     hyprctl dispatch exec ags`,
     lock: `
     playerctl -a pause
-    hyprlock`,
+    swaylock -f -c '#151418'`,
     logout: "hyprctl dispatch exit",
   },
   transition: {
@@ -42,7 +41,7 @@ export default {
       "dolphin",
       "spotify",
       "webcord",
-      "firefox web browser",
+      "firefox",
       "librewolf",
       "brave",
       "krita",
@@ -51,14 +50,14 @@ export default {
       "freetube",
       "localsend",
       "vscodium - wayland",
-      "bitwarden",
+      "keepassxc",
       "tor browser",
       "qalculate! (qt)",
     ],
   },
   nightlight: {
     // requires wl-gammarelay-rs
-    on: "19:30",
+    on: "19:00",
     off: "6:00",
     temp: "3500",
   },

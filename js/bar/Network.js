@@ -1,30 +1,36 @@
+import { bind } from "astal";
+import { App } from "astal/gtk3";
 import icons from "../icons.js";
-import { App, Network, Widget } from "../imports.js";
+import { Network, Widget } from "../imports.js";
 
 const WifiIndicator = () =>
   Widget.Box({
-    children: [
-      Widget.Icon({
-        icon: Network.wifi.bind("icon-name"),
-      }),
-      Widget.Label({
-        label: Network.wifi.bind("ssid"),
-      }),
-    ],
+    name: "wifi",
+    // children: [
+    //   Widget.Icon({
+    //     icon: bind(Network.wifi, "icon-name"),
+    //   }),
+    //   Widget.Label({
+    //     label: bind(Network.wifi, "ssid"),
+    //   }),
+    // ],
   });
 
 const WiredIndicator = () =>
   Widget.Button({
-    onClicked: () => App.toggleWindow("dashboard"),
+    name: "wired",
+    onClicked: () => {
+      App.get_window("dashboard").visible = true;
+    },
     child: Widget.Icon({
       className: "icon",
-      icon: Network.bind("connectivity").transform((status) => {
+      icon: bind(Network, "connectivity").as((status) => {
         switch (status) {
-          case "full":
+          case 4: // FULL
             return icons.network.wired.connected;
-          case "portal":
+          case 2: // PORTAL
             return icons.network.wired.portal;
-          case "limited":
+          case 3: // LIMITED
             return icons.network.wired.limited;
           default:
             return icons.network.wired.disconnected;
@@ -36,9 +42,9 @@ const WiredIndicator = () =>
 export default () =>
   Widget.Stack({
     className: "network",
-    children: {
-      wifi: WifiIndicator(),
-      wired: WiredIndicator(),
-    },
-    shown: Network.bind("primary").transform((p) => p || "wired"),
+    children: [WifiIndicator(), WiredIndicator()],
+    shown: bind(Network, "primary").as((p) => {
+      if (p === 2) return "wifi";
+      return "wired";
+    }),
   });

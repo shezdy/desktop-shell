@@ -1,10 +1,14 @@
-import { App, Hyprland, Mpris, Widget } from "../imports.js";
+import { bind } from "astal";
+import { App } from "astal/gtk3";
+import { Hyprland, Mpris, Widget } from "../imports.js";
 import options from "../options.js";
 
 Mpris.cacheCoverArt = true;
 
+globalThis.MPRIS_CURRENT_PLAYER = null;
+
 const getPlayer = () => {
-  const playerList = Mpris.players;
+  const playerList = Mpris.get_players();
   if (playerList.length === 0) return null;
 
   const playerSet = new Set();
@@ -18,7 +22,7 @@ const getPlayer = () => {
     }
 
     for (const player of playerList) {
-      if (player.name === whitelistName) {
+      if (player.identity.toLowerCase() === whitelistName.toLowerCase()) {
         playerSet.delete(player);
         playerSet.add(player);
       }
@@ -27,16 +31,22 @@ const getPlayer = () => {
   return playerSet.values().next().value;
 };
 
-const MediaBox = (player) => {
-  return Widget.Box({
+const MediaBox = (player) =>
+  Widget.Box({
     className: "media",
     children: [
       Widget.Button({
         onClicked: () => {
-          const name = player.name;
+          const name = player.identity;
           if (!name || name.length === 0) return;
+
+          if (name === "Spotify") {
+            Hyprland.message("dispatch focuswindow initialtitle:Spotify");
+            return;
+          }
+
           const regex = `[${name[0].toUpperCase()}${name[0].toLowerCase()}]${name.slice(1)}`;
-          Hyprland.messageAsync(`dispatch focuswindow ${regex}`);
+          Hyprland.message(`dispatch focuswindow ${regex}`);
         },
         className: "cover",
         child: Widget.Box({
@@ -44,59 +54,61 @@ const MediaBox = (player) => {
           children: [
             Widget.Icon({
               icon: "sparkle-symbolic",
+              visible: false,
             }),
           ],
           setup: (self) => {
             self
-              .hook(
-                player,
-                (self) => {
-                  self.children[0].visible = false;
-                  self.css = `background-image: url("${player.coverPath}")`;
-                },
-                "notify::cover-path",
-              )
-              .hook(
-                player,
-                (self) => {
-                  if (player.trackCoverUrl === "" || !Mpris.cacheCoverArt) {
-                    self.children[0].visible = true;
-                    self.css = "background-image: none";
-                  }
-                },
-                "notify::track-cover-url",
-              );
+              .hook(player, "notify::cover-art", (self) => {
+                self.children[0].visible = false;
+                self.css = `background-image: url("${player.coverArt}")`;
+              })
+              .hook(player, "notify::art-url", (self) => {
+                if (!player.artUrl || player.artUrl === "") {
+                  self.children[0].visible = true;
+                  self.css = "background-image: none";
+                }
+              });
+            if (player.coverArt) {
+              self.children[0].visible = false;
+              self.css = `background-image: url("${player.coverArt}")`;
+            }
           },
         }),
       }),
       Widget.Button({
         className: "text",
-        onPrimaryClick: () => player?.playPause(),
-        onSecondaryClick: () => player?.next(),
-        onScrollUp: () => {
-          player.volume += 0.05;
+        onClick: (self, event) => {
+          switch (event.button) {
+            case 1:
+              player?.play_pause();
+              break;
+            case 3:
+              player?.next();
+              break;
+          }
         },
-        onScrollDown: () => {
-          player.volume -= 0.05;
+        onScroll: (self, event) => {
+          if (event.delta_y < 0) player.volume += 0.05;
+          else player.volume -= 0.05;
         },
         child: Widget.Box({
           children: [
             Widget.Label({
               className: "artist",
-              label: player.bind("track-artists").transform((list) => {
-                const artists = list.join(", ");
-                if (!artists || artists === "Unknown artist") {
-                  return `${player.name} `;
+              label: bind(player, "artist").as((artist) => {
+                if (!artist || artist === "Unknown artist") {
+                  return player.name ? `${player.name} ` : "";
                 }
-                if (artists.length > 40) return `${artists.slice(0, 37)}... `;
-                return `${artists} `;
+                if (artist.length > 40) return `${artist.slice(0, 37)}... `;
+                return `${artist} `;
               }),
             }),
             Widget.Label({
               className: "title",
-              label: player.bind("track-title").transform((title) => {
+              label: bind(player, "title").as((title) => {
                 if (title.length > 40) return `${title.slice(0, 37)}...`;
-                return title;
+                return title || "";
               }),
             }),
           ],
@@ -104,23 +116,24 @@ const MediaBox = (player) => {
       }),
     ],
   });
-};
 
 export default () => {
   return Widget.Box({
     setup: (self) => {
-      self.hook(
-        Mpris,
-        (self) => {
-          const player = getPlayer();
-          if (!player) {
-            self.visible = false;
-            return;
-          }
-          self.children = [MediaBox(player)];
-        },
-        "notify::players",
-      );
+      const update = () => {
+        const player = getPlayer();
+        MPRIS_CURRENT_PLAYER = player;
+        if (!player) {
+          self.visible = false;
+          if (self.child) self.child.destroy();
+          return;
+        }
+        if (self.child) self.child.destroy();
+        self.add(MediaBox(player));
+        self.visible = true;
+      };
+      self.hook(Mpris, "notify::players", update);
+      update();
     },
   });
 };

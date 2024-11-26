@@ -12,7 +12,7 @@ $bar_button_background_hover: false;
   transition: 200ms;
   &:hover,
   .hover {
-    background-color: transparentize($color, $transparentize);
+    background-color: color.adjust($color, $alpha: -$transparentize);
     transition: 200ms;
   }
 }
@@ -84,17 +84,17 @@ $bar_button_background_hover: false;
     }
 
     .ws-button {
-      padding: $ws_padding;
+      padding: $ws_padding $ws_padding + 1px;
 
       @include hover_lighten($amount: 0.15);
 
       animation: deactivate_padding $dur_short ease;
       .box {
-        animation: deactivate_width $dur_short ease;
+        // animation: deactivate_width $dur_short ease;
         margin: calc(($bar_height - $ws_dot_size - (2 * $ws_padding) - (2 * $bar_margin_v)) / 2) 0;
         border-radius: 1rem;
         min-height: $ws_dot_size;
-        min-width: $ws_dot_size;
+        min-width: 8px;
         background-color: $surface4;
       }
       &.empty {
@@ -136,10 +136,6 @@ $bar_button_background_hover: false;
 
   .tasklist {
     button {
-      * {
-        background-color: transparent;
-      }
-
       .icon {
         margin-right: 8px;
         color: $dark_blue;
@@ -155,6 +151,9 @@ $bar_button_background_hover: false;
         color: $fg;
         background-color: black;
       }
+      * {
+        background-color: transparent;
+      }
     }
   }
 
@@ -168,11 +167,11 @@ $bar_button_background_hover: false;
   .systray {
     margin: 0 calc($bar_spacing/2) 0 $bar_spacing;
     button {
-      @include button($flat: true);
+      @include button($flat: true, $hoverable: false);
 
       $icon_size: 14px;
       $button_size: $icon_size + $bar_spacing;
-      image {
+      icon {
         font-size: $icon_size;
       }
       padding: 0 calc($bar_spacing / 2);
@@ -232,7 +231,7 @@ $bar_button_background_hover: false;
   .volume {
     color: $green;
     padding: 0 $bar_spacing;
-    image {
+    icon {
       font-size: $bar_icon_size;
       margin-right: 4px;
     }
@@ -241,7 +240,7 @@ $bar_button_background_hover: false;
   .battery {
     color: $cyan;
     padding: 0 $bar_spacing;
-    image {
+    icon {
       font-size: $bar_icon_size;
       margin-right: 4px;
     }
@@ -250,7 +249,7 @@ $bar_button_background_hover: false;
   .network {
     color: $blue;
     padding: 0 $bar_spacing;
-    image {
+    icon {
       font-size: $bar_icon_size;
     }
   }

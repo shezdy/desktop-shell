@@ -1,5 +1,8 @@
-import { App, Hyprland, Widget } from "../imports.js";
-import Battery from "./Battery.js";
+import { idle } from "astal";
+import { App, Astal } from "astal/gtk3";
+import { Hyprland, Widget } from "../imports.js";
+
+// import Battery from "./Battery.js";
 import Clock from "./Clock.js";
 import Media from "./Media.js";
 import Network from "./Network.js";
@@ -10,7 +13,9 @@ import Workspaces from "./Workspaces.js";
 
 const LauncherButton = () => {
   return Widget.Button({
-    onClicked: () => App.toggleWindow("launcher"),
+    onClicked: () => {
+      App.get_window("launcher").visible = true;
+    },
     className: "launcher-button",
   });
 };
@@ -22,12 +27,17 @@ const SysIndicators = () => {
       Widget.EventBox({
         className: "eventbox",
         child: Widget.Box({
-          children: [Volume(), Battery(), Network(), Clock()],
+          children: [
+            Volume(),
+            //Battery(),
+            Network(),
+            Clock(),
+          ],
         }),
         setup: (self) => {
-          self.hook(App, (self, win, visible) => {
-            if (win === "dashboard") {
-              self.toggleClassName("active", visible);
+          self.hook(App, "window-toggled", (self, win) => {
+            if (win.name === "dashboard") {
+              self.toggleClassName("active", win.visible);
             }
           });
         },
@@ -42,34 +52,23 @@ const ConfigErrorIndicator = () =>
     child: Widget.Label({ label: "-------", visible: true }),
     visible: false,
     onClicked: () => {
-      Hyprland.messageAsync(
+      Hyprland.message(
         "dispatch exec [float;move onscreen 0% 0%;size 800, 500] kitty -e hyprpm update",
       );
     },
     setup: (self) => {
-      const errors = JSON.parse(Hyprland.message("j/configerrors"));
-      if (errors[0] !== "") {
-        self.visible = true;
-        self.tooltipText = errors.join("\n");
-      } else {
-        self.visible = false;
-      }
+      const update = () => {
+        const errors = JSON.parse(Hyprland.message("j/configerrors"));
+        if (errors[0] !== "") {
+          self.visible = true;
+          self.tooltipText = errors.join("\n");
+        } else {
+          self.visible = false;
+        }
+      };
 
-      self.hook(
-        Hyprland,
-        (self, name, _data) => {
-          if (name === "configreloaded") {
-            const errors = JSON.parse(Hyprland.message("j/configerrors"));
-            if (errors[0] !== "") {
-              self.visible = true;
-              self.tooltipText = errors.join("\n");
-            } else {
-              self.visible = false;
-            }
-          }
-        },
-        "event",
-      );
+      update();
+      self.hook(Hyprland, "config-reloaded", update);
     },
   });
 
@@ -78,7 +77,7 @@ const Left = (monitor) =>
     className: "left",
     children: [LauncherButton(), Workspaces(monitor)],
     setup: (self) => {
-      Utils.idle(() => self.add(ConfigErrorIndicator()));
+      idle(() => self.add(ConfigErrorIndicator()));
     },
   });
 
@@ -98,9 +97,9 @@ const Right = () =>
 export default (monitor, gdkmonitor) =>
   Widget.Window({
     name: `bar${monitor}`,
-    exclusivity: "exclusive",
-    monitor: gdkmonitor,
-    anchor: ["top", "left", "right"],
+    exclusivity: Astal.Exclusivity.EXCLUSIVE,
+    gdkmonitor,
+    anchor: Astal.WindowAnchor.TOP | Astal.WindowAnchor.LEFT | Astal.WindowAnchor.RIGHT,
     child: Widget.Box({
       className: "bar",
       homogeneous: false,

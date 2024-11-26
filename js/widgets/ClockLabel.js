@@ -1,12 +1,24 @@
-import { GLib, Variable, Widget } from "../imports.js";
+import { Variable, bind } from "astal";
+import { GLib, Widget } from "../imports.js";
 
-const time = Variable(GLib.DateTime.new_now_local(), {
-  poll: [5000, () => GLib.DateTime.new_now_local()],
-});
+const time = Variable();
+
+const update_time = () => {
+  const now = GLib.DateTime.new_now_local();
+  setTimeout(
+    () => {
+      update_time();
+    },
+    1000 * (60 - now.get_seconds()),
+  );
+  time.set(now);
+};
+
+update_time();
 
 export default ({ format = "%a %d %b %H:%M", ...props } = {}) =>
   Widget.Label({
     className: "clock",
-    label: time.bind().transform((t) => t.format(format) || "wrong format"),
+    label: bind(time).as((t) => t.format(format) || "wrong format"),
     ...props,
   });

@@ -16,12 +16,12 @@
     }
 
     .time {
-      color: transparentize($fg, 0.2);
+      color: color.adjust($fg, $alpha: -0.2);
     }
 
     .description {
       font-size: 1em;
-      color: transparentize($fg, 0.2);
+      color: color.adjust($fg, $alpha: -0.2);
     }
 
     .icon {
@@ -30,6 +30,10 @@
       min-height: 78px;
       border-radius: $radii * 0.8;
       margin-right: $spacing;
+
+      icon {
+        font-size: 78px;
+      }
 
       &.img {
         border: $border;
@@ -67,7 +71,7 @@
     min-height: 1.2em;
 
     &:hover {
-      background-color: transparentize($red, 0.5);
+      background-color: color.adjust($red, $alpha: -0.5);
     }
 
     &:active {

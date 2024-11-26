@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "strict": true,
+    "target": "ES2023",
+    "moduleResolution": "Bundler",
+    "checkJs": false,
+    "allowJs": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "/usr/share/astal/gjs/gtk3",
+    "paths": {
+      "astal": ["/usr/share/astal/gjs"],
+      "astal/*": ["/usr/share/astal/gjs/*"]
+    }
+  }
+}

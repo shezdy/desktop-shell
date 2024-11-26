@@ -27,7 +27,7 @@
   &:hover {
     * {
       transition: color $dur;
-      color: lighten($color, $amount);
+      color: color.adjust($color, $lightness: $amount);
     }
   }
 }
@@ -79,24 +79,24 @@
 }
 
 @mixin button_focus() {
-  background-color: lighten($hover, 2%);
+  background-color: color.adjust($hover, $lightness: 2%);
   color: $hover_fg;
 }
 
 @mixin button_hover() {
-  background-color: lighten($hover, 2%);
+  background-color: color.adjust($hover, $lightness: 2%);
   color: $hover_fg;
 }
 
 @mixin button_active() {
-  background-color: lighten($hover, 8%);
+  background-color: color.adjust($hover, $lightness: 8%);
   color: $hover_fg;
 }
 
 @mixin button_disabled() {
   box-shadow: none;
   background-color: transparent;
-  color: transparentize($fg, 0.7);
+  color: color.adjust($fg, $alpha: -0.7);
 }
 
 @mixin button(
@@ -145,11 +145,7 @@
 }
 
 @mixin floating_widget($shaded: false) {
-  * {
-    font-size: $font_size;
-    background-color: transparent;
-  }
-  @if not $shaded {
+  @if $shaded {
     box-shadow: 0 0 4px $shadow_color;
   }
   margin: 7px; // hyprland gaps_out - 1
@@ -220,7 +216,7 @@
   &:disabled {
     highlight,
     progress {
-      background-color: transparentize($fg, 0.4);
+      background-color: color.adjust($fg, $alpha: -0.4);
       background-image: none;
     }
   }
@@ -248,10 +244,10 @@
 
   scrollbar.vertical {
     transition: $dur_short;
-    background-color: transparentize($bg, 0.7);
+    background-color: color.adjust($bg, $alpha: -0.7);
 
     &:hover {
-      background-color: transparentize($bg, 0.3);
+      background-color: color.adjust($bg, $alpha: -0.3);
 
       slider {
         background-color: $hover;

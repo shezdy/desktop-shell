@@ -1,3 +1,4 @@
+@use "sass:color";
 @import "./colors.scss";
 
 $radii: 12px;
@@ -5,7 +6,7 @@ $spacing: 8px;
 $padding: 8px;
 $border_width: 1px;
 $border: solid;
-$active_gradient: linear-gradient(to right, $accent, lighten($accent, 6%));
+$active_gradient: linear-gradient(to right, $accent, color.adjust($accent, $lightness: 6%));
 $font_size: 13px;
 $bar_icon_size: 11px;
 $bar_font: "CaskaydiaCove Nerd Font", "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
@@ -106,6 +107,21 @@ tooltip {
     padding: 4px;
     margin: 0px;
     box-shadow: 0 0 4px $shadow_color;
+  }
+}
+
+.osd-popup-list {
+  margin-top: 256px;
+  min-width: 400px;
+  .osd-popup {
+    @include floating_widget;
+    label {
+      font-size: $font_size * 2;
+    }
+    image {
+      margin-right: $spacing;
+      font-size: $font_size * 1.5;
+    }
   }
 }
 

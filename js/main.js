@@ -1,36 +1,24 @@
-import "./init.js";
+import "./earlyinit.js";
 
-import AltTab from "./alttab/AltTab.js";
+import { exec } from "astal";
+import { App } from "astal/gtk3";
+import AltTab, { cycleNext } from "./alttab/AltTab.js";
 import Bar from "./bar/Bar.js";
 import Dashboard from "./dashboard/Dashboard.js";
 import Desktop from "./desktop/Desktop.js";
-import { App, GLib, Hyprland, Utils } from "./imports.js";
+import { minimizeFocused, restoreClient } from "./helpers/Misc.js";
+import { GLib, Gdk, Hyprland } from "./imports.js";
 import Launcher from "./launcher/Launcher.js";
 import NotificationPopups from "./notifications/NotificationPopups.js";
-import options from "./options.js";
 import PowerMenu from "./powermenu/PowerMenu.js";
-import Ipc from "./services/Ipc.js";
 import Confirm from "./widgets/Confirm.js";
 
-function forMonitors(widget) {
-  // gtk bug workaround
-  const gdkMonitors = Utils.exec(`gjs -m ${App.configDir}/js/helpers/monitors.js`).split("\n");
-  return Hyprland.monitors.map((monitor) => {
-    let i = 0;
-    for (i; i < gdkMonitors.length; i++) {
-      if (gdkMonitors[i] === monitor.name) break;
-    }
-
-    if (i === gdkMonitors.length) return widget(monitor.id, monitor.id);
-
-    return widget(monitor.id, i);
-  });
-}
-
-const scss = `${App.configDir}/scss/main.scss`;
-const css = `${Utils.CACHE_DIR}/css/main.css`;
+const scss = `${SRC}/scss/main.scss`;
+const css = `${SRC}/build/main.css`;
 try {
-  const [_, out, err] = GLib.spawn_command_line_sync(`sass ${scss} ${css}`);
+  const [_, out, err] = GLib.spawn_command_line_sync(
+    `sass --silence-deprecation=mixed-decls ${scss} ${css}`,
+  );
   const decoder = new TextDecoder();
 
   const outDecode = decoder.decode(out).trim();
@@ -42,29 +30,87 @@ try {
   console.error(error);
 }
 
-Hyprland.connect("monitor-added", () => {
-  Utils.exec("hyprctl dispatch exec 'sleep 0.5; ags -q ; ags'");
-});
-Hyprland.connect("monitor-removed", () => {
-  Utils.exec("hyprctl dispatch exec 'sleep 0.5; ags -q ; ags'");
-});
+function getGdkMonitor(hyprlandMonitor) {
+  if (!hyprlandMonitor) return undefined;
 
-App.config({
-  style: css,
-  icons: `${App.configDir}/assets`,
-  windows: [
-    forMonitors(Bar),
-    forMonitors(Desktop),
-    AltTab(),
-    NotificationPopups(),
-    Dashboard(),
-    Launcher(),
-    PowerMenu(),
-    Confirm(),
-  ].flat(),
-  closeWindowDelay: {
-    dashboard: options.transition.duration,
+  const display = Gdk.Display.get_default();
+  const screen = display.get_default_screen();
+  for (let i = 0; i < display.get_n_monitors(); i++) {
+    if (screen.get_monitor_plug_name(i) === hyprlandMonitor.name)
+      return display.get_monitor(i);
+  }
+
+  return undefined;
+}
+
+// kded6 starts in the background sometimes? maybe related to dolphin.
+// prevents system tray from working if it is left running
+try {
+  exec("pkill kded6");
+} catch {}
+
+App.start({
+  instanceName: "plantshell",
+  css: css,
+  requestHandler: (request, response) => {
+    let res = "ok";
+
+    switch (request) {
+      case "minimizeClient":
+        minimizeFocused();
+        break;
+      case "restoreClient":
+        restoreClient();
+        break;
+      case "altTabStart":
+        cycleNext(true);
+        break;
+      case "altTabCycleNext":
+        cycleNext();
+        break;
+      case "mprisPlayPause":
+        MPRIS_CURRENT_PLAYER?.play_pause();
+        break;
+      case "mprisNext":
+        MPRIS_CURRENT_PLAYER?.next();
+        break;
+      case "mprisPrevious":
+        MPRIS_CURRENT_PLAYER?.previous();
+        break;
+      case "mprisVolUp":
+        if (MPRIS_CURRENT_PLAYER) MPRIS_CURRENT_PLAYER.volume += 0.05;
+        break;
+      case "mprisVolDown":
+        if (MPRIS_CURRENT_PLAYER) MPRIS_CURRENT_PLAYER.volume -= 0.05;
+        break;
+      default:
+        res = "unknown request";
+        break;
+    }
+
+    response(res);
+  },
+  main: () => {
+    for (const m of Hyprland.get_monitors()) {
+      App.add_window(Bar(m.id, getGdkMonitor(m)));
+      App.add_window(Desktop(m.id, getGdkMonitor(m)));
+    }
+    App.add_window(Confirm());
+    App.add_window(NotificationPopups());
+    App.add_window(Dashboard());
+    App.add_window(Launcher());
+    App.add_window(PowerMenu());
+    App.add_window(AltTab());
   },
 });
 
-Ipc.start();
+Hyprland.connect("monitor-added", () => {
+  exec(
+    `hyprctl dispatch exec 'sleep 0.5; astal -i plantshell -q ; /home/d/repos/ags/ags run -d ${SRC}'`,
+  );
+});
+Hyprland.connect("monitor-removed", () => {
+  exec(
+    `hyprctl dispatch exec 'sleep 0.5; astal -i plantshell -q ; /home/d/repos/ags/ags run -d ${SRC}'`,
+  );
+});

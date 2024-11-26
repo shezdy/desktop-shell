@@ -37,7 +37,7 @@ const BrightnessScreen = (screen) =>
               }),
               Widget.Label({
                 xalign: 1,
-                label: screen.bind("brightness").transform((b) => `${Math.floor(b * 100)}%`),
+                label: screen.bind("brightness").as((b) => `${Math.floor(b * 100)}%`),
               }),
             ],
           }),
@@ -65,7 +65,7 @@ export const BrightnessMixer = () =>
       Widget.Box({
         vertical: true,
         className: "mixer",
-        children: Brightness.bind("screens").transform((s) => s.map(BrightnessScreen)),
+        children: Brightness.bind("screens").as((s) => s.map(BrightnessScreen)),
       }),
     ],
   });
@@ -97,7 +97,7 @@ export default () =>
       Widget.Box({
         vpack: "center",
         child: Arrow("brightness-mixer"),
-        visible: Brightness.bind("screens").transform((s) => s.length > 1),
+        visible: Brightness.bind("screens").as((s) => s.length > 1),
       }),
     ],
   });

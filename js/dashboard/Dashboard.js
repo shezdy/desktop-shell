@@ -1,7 +1,9 @@
-import { App, Widget } from "../imports.js";
+import { Variable } from "astal";
+import { App, Astal, astalify } from "astal/gtk3";
+import { Gdk, Gtk, Widget } from "../imports.js";
 import Brightness from "../services/Brightness.js";
-import PopupWindow from "../widgets/PopupWindow.js";
-import BrightnessSliderRow, { BrightnessMixer } from "./BrightnessSettings.js";
+import PopupWindow, { closePopupWindow } from "../widgets/PopupWindow.js";
+// import BrightnessSliderRow, { BrightnessMixer } from "./BrightnessSettings.js";
 import Header from "./Header.js";
 import NotificationCenter from "./NotificationCenter.js";
 import QuickTiles from "./QuickTiles.js";
@@ -12,6 +14,7 @@ import {
   SourceSelector,
   VolumeSliderRow,
 } from "./VolumeSettings.js";
+import GObject from "gi://GObject";
 
 const WINDOW_NAME = "dashboard";
 
@@ -27,11 +30,6 @@ const Row = (children = [], menus = [], ...props) =>
     ],
     ...props,
   });
-
-const sliderRows = [
-  Row([VolumeSliderRow()], [SinkSelector(), AppMixer()]),
-  Row([MicrophoneSliderRow()], [SourceSelector()]),
-];
 
 const Dashboard = () =>
   Widget.Box({
@@ -50,12 +48,24 @@ const Dashboard = () =>
           Widget.Box({
             className: "sliders-box vertical",
             vertical: true,
-            setup: (self) => {
-              if (Brightness.screens) {
-                sliderRows.push(Row([BrightnessSliderRow()], [BrightnessMixer()]));
-              }
-              self.children = sliderRows;
-            },
+            children: [
+              Row([VolumeSliderRow()], [SinkSelector(), AppMixer()]),
+              Row([MicrophoneSliderRow()], [SourceSelector()]),
+            ],
+            // sliderRows: [
+            //   Row([VolumeSliderRow()], [SinkSelector(), AppMixer()]),
+            //   Row([MicrophoneSliderRow()], [SourceSelector()]),
+            // ],
+            // setup: (self) => {
+            //   // const sliderRows = [
+            //   //   Row([VolumeSliderRow()], [SinkSelector(), AppMixer()]),
+            //   //   Row([MicrophoneSliderRow()], [SourceSelector()]),
+            //   // ];
+            //   // if (Brightness.screens) {
+            //   //   sliderRows.push(Row([BrightnessSliderRow()], [BrightnessMixer()]));
+            //   // }
+            //   // self.children = self.sliderRows;
+            // },
           }),
         ],
       }),
@@ -64,12 +74,10 @@ const Dashboard = () =>
       Widget.Separator(),
       Widget.Box({
         className: "calendar",
-        children: [
-          Widget.Calendar({
-            hexpand: true,
-            hpack: "center",
-          }),
-        ],
+        child: Widget.Calendar({
+          hexpand: true,
+          hpack: "center",
+        }),
       }),
     ],
   });
@@ -77,10 +85,7 @@ const Dashboard = () =>
 export default () =>
   PopupWindow({
     name: WINDOW_NAME,
-    transition: "slide_left",
+    transition: Gtk.RevealerTransitionType.SLIDE_LEFT,
     location: "right",
     child: Dashboard(),
-    setup: (self) => {
-      self.keybind("Escape", () => App.closeWindow(WINDOW_NAME));
-    },
   });

@@ -1,18 +1,26 @@
+import { exec, execAsync } from "astal";
+import { Astal } from "astal/gtk3";
 import icons from "../icons.js";
-import { Applications, Hyprland, Utils } from "../imports.js";
+import { Applications, Hyprland } from "../imports.js";
+
+const iconSubs = {
+  "Spotify Premium": "com.spotify.Client",
+  Joplin: "@joplinapp-desktop",
+};
 
 export function execSh(cmd) {
-  Utils.execAsync(["sh", "-c", `${cmd}`]).catch((error) => console.error(`execSh error: ${error}`));
+  if (!cmd || cmd === "") return;
+  execAsync(["sh", "-c", `${cmd}`]).catch((error) => console.error(`execSh error: ${error}`));
 }
 
 export function execBash(cmd) {
-  Utils.execAsync(["bash", "-c", `${cmd}`]).catch((error) =>
-    console.error(`execBash error: ${error}`),
-  );
+  if (!cmd || cmd === "") return;
+  execAsync(["bash", "-c", `${cmd}`]).catch((error) => console.error(`execBash error: ${error}`));
 }
 
 export function launchApp(app) {
-  Hyprland.messageAsync(`dispatch exec gio launch ${app.app.filename}`);
+  if (!app) return;
+  Hyprland.message(`dispatch exec gio launch ${app.app.filename}`);
   app.frequency++;
 }
 
@@ -21,27 +29,30 @@ export function launchApp(app) {
  * @returns client icon or fallback icon
  */
 export function getHyprlandClientIcon(client) {
-  let icon = Applications.query(client.initialClass)[0]?.iconName;
-  if (!icon) {
-    icon = Applications.query(client.initialTitle)[0]?.iconName;
-  }
-  return Utils.lookUpIcon(icon) ? icon : icons.apps.fallback;
+  if (!client) return icons.apps.fallback;
+  let icon = "";
+
+  if ((!icon || icon === "") && client.initialClass !== "")
+    icon = Applications.exact_query(client.initialClass)[0]?.iconName;
+  if ((!icon || icon === "") && client.initialTitle !== "")
+    icon = Applications.exact_query(client.initialTitle)[0]?.iconName;
+
+  icon = iconSubs[client.initialTitle] || icon;
+  return Astal.Icon.lookup_icon(icon) ? icon : icons.apps.fallback;
 }
 
 export function minimizeFocused() {
-  if (Hyprland.active.workspace.id)
-    Hyprland.messageAsync(
-      `dispatch movetoworkspacesilent special:m${Hyprland.active.workspace.id}`,
-    );
+  if (Hyprland.focusedWorkspace?.id)
+    Hyprland.message(`dispatch movetoworkspacesilent special:m${Hyprland.focusedWorkspace.id}`);
 }
 
 export function restoreClient() {
-  const client = Hyprland.clients.find(
-    (c) => c.workspace.name === `special:m${Hyprland.active.workspace.id}`,
+  const client = Hyprland.get_clients().find(
+    (c) => c.workspace.name === `special:m${Hyprland.focusedWorkspace.id}`,
   );
   if (client)
-    Hyprland.messageAsync(
-      `dispatch movetoworkspacesilent ${Hyprland.active.workspace.id},address:${client.address}`,
+    Hyprland.message(
+      `dispatch movetoworkspacesilent ${Hyprland.focusedWorkspace.id},address:0x${client.address}`,
     );
 }
 
@@ -50,18 +61,21 @@ export function restoreClient() {
  * @param {boolean} cursorWarp
  */
 export function focusClient(client, cursorWarp = false) {
+  if (!client) return;
   let cmd = "[[BATCH]]";
   if (!cursorWarp) cmd += "keyword cursor:no_warps 1;";
 
+  if (client.address.startsWith("0x")) client.address = client.address.substring(2);
+
   if (client.workspace.id < 1) {
     const normalWS = parseInt(client.workspace.name.match(/\d+$/)[0]);
-    cmd += `dispatch movetoworkspace ${normalWS},address:${client.address};`;
+    cmd += `dispatch movetoworkspace ${normalWS},address:0x${client.address};`;
   } else {
-    cmd += `dispatch focuswindow address:${client.address};`;
+    cmd += `dispatch focuswindow address:0x${client.address};`;
   }
 
-  if (!cursorWarp) cmd += `"keyword cursor:no_warps 0"`;
-  Hyprland.messageAsync(cmd);
+  if (!cursorWarp) cmd += "keyword cursor:no_warps 0";
+  Hyprland.message(cmd);
 }
 
 /**
@@ -69,21 +83,22 @@ export function focusClient(client, cursorWarp = false) {
  * @param {boolean} cursorWarp
  */
 export function focusClientOrMinimize(client, cursorWarp = false) {
+  if (!client) return;
   let cmd = "[[BATCH]]";
   if (!cursorWarp) cmd += "keyword cursor:no_warps 1;";
 
   if (client.workspace.id > 0) {
-    if (client.address === Hyprland.active.client.address)
-      cmd += `dispatch movetoworkspacesilent special:m${client.workspace.id},address:${client.address};`;
-    else cmd += `dispatch focuswindow address:${client.address};`;
+    if (client.address === Hyprland.focusedClient?.address)
+      cmd += `dispatch movetoworkspacesilent special:m${client.workspace.id},address:0x${client.address};`;
+    else cmd += `dispatch focuswindow address:0x${client.address};`;
   } else {
     cmd += `dispatch movetoworkspacesilent ${
       client.workspace.name.match(/\d+$/)[0] // get workspace number at the end of the special workspace name
-    },address:${client.address};`;
+    },address:0x${client.address};`;
   }
 
   if (!cursorWarp) cmd += "keyword cursor:no_warps 0";
-  Hyprland.messageAsync(cmd);
+  Hyprland.message(cmd);
 }
 
 /**
@@ -92,11 +107,12 @@ export function focusClientOrMinimize(client, cursorWarp = false) {
  * @param {boolean} cursorWarp
  */
 export function fullscreenToggle(client, mode, cursorWarp = false) {
+  if (!client) return;
   let cmd = "[[BATCH]]";
   if (!cursorWarp) cmd += "keyword cursor:no_warps 1;";
 
-  cmd += `dispatch focuswindow address:${client.address}; dispatch fullscreen ${mode};`;
+  cmd += `dispatch focuswindow address:0x${client.address}; dispatch fullscreen ${mode};`;
 
   if (!cursorWarp) cmd += "keyword cursor:no_warps 0";
-  Hyprland.messageAsync(cmd);
+  Hyprland.message(cmd);
 }

@@ -1,5 +1,7 @@
+import { Variable, bind } from "astal";
+import { App, Astal } from "astal/gtk3";
 import icons from "../icons.js";
-import { App, Hyprland, PowerProfiles, Widget } from "../imports.js";
+import { Gtk, Hyprland, PowerProfiles, Widget } from "../imports.js";
 import options from "../options.js";
 import Brightness from "../services/Brightness.js";
 import NightLight from "../services/NightLight.js";
@@ -12,21 +14,21 @@ const BrightnessPreset = (brightness, text) =>
     onClicked: () => {
       Brightness.screens = brightness;
     },
-    child: FontIcon(text),
+    child: FontIcon({ icon: text }),
   });
 
 const ExecQuickTile = ({ exec, icon, labelText }) => {
   return Widget.Button({
     hexpand: true,
     onClicked: () => {
-      App.closeWindow("dashboard");
-      Hyprland.messageAsync(`dispatch exec ${exec}`);
+      App.get_window("dashboard").visible = false;
+      Hyprland.message(`dispatch exec ${exec}`);
     },
     child: Widget.CenterBox({
       vpack: "center",
       startWidget: Widget.Box({
         vpack: "center",
-        children: [icon, Widget.Label(labelText)],
+        children: [icon, Widget.Label({ label: labelText })],
       }),
       endWidget: Widget.Box({
         vpack: "center",
@@ -46,18 +48,16 @@ const PowerProfileTile = () =>
   Widget.Button({
     hexpand: true,
     onClicked: () => {
-      const i = PowerProfiles.profiles.findIndex((p) => p.Profile === PowerProfiles.activeProfile);
-      if (i === -1) PowerProfiles.activeProfile = PowerProfiles.profiles[0].Profile;
-      else
-        PowerProfiles.activeProfile =
-          PowerProfiles.profiles[(i + 1) % PowerProfiles.profiles.length].Profile;
+      const profiles = PowerProfiles.get_profiles();
+      const i = profiles.findIndex((p) => p?.profile === PowerProfiles?.activeProfile);
+      if (i !== -1) PowerProfiles.activeProfile = profiles[(i + 1) % profiles.length].profile;
     },
     child: Widget.Box({
       vpack: "center",
       children: [
-        Widget.Icon(icons.powermode.profile.Balanced),
+        Widget.Icon({ icon: icons.powermode.profile.Balanced }),
         Widget.Label({
-          label: PowerProfiles.bind("activeProfile").as((p) => p[0].toUpperCase() + p.slice(1)),
+          label: bind(PowerProfiles, "active-profile").as((p) => p[0].toUpperCase() + p.slice(1)),
         }),
       ],
     }),
@@ -74,21 +74,19 @@ const NightLightTile = () => {
       NightLight.toggle();
     },
     child: Widget.Box({
-      vpack: "center",
+      valign: Gtk.Align.CENTER,
       children: [
-        Widget.Icon("weather-clear-night-symbolic"),
+        Widget.Icon({ icon: "weather-clear-night-symbolic" }),
         Widget.Box({
           className: "text-box",
           vertical: true,
           children: [
             Widget.Label({
               label: "Night Light",
-              hpack: "start",
             }),
             Widget.Label({
-              label: NightLight.bind("text"),
+              label: bind(NightLight, "text"),
               className: "subtext",
-              hpack: "start",
             }),
           ],
         }),
@@ -110,7 +108,7 @@ export default () =>
             children: [
               ExecQuickTile({
                 exec: "nm-connection-editor",
-                icon: Widget.Icon(icons.network.wired.connected),
+                icon: Widget.Icon({ icon: icons.network.wired.connected }),
                 labelText: "Connections",
               }),
               ExecQuickTile({

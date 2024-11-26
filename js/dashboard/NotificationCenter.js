@@ -1,18 +1,25 @@
-import { Notifications, Widget } from "../imports.js";
+import { bind } from "astal";
+import { Gtk, Notifications, Widget } from "../imports.js";
 import { NotificationNoReveal } from "../notifications/Notification.js";
+
+const notifictionsClear = () => {
+  for (const n of Notifications.get_notifications()) {
+    n.dismiss();
+  }
+};
 
 const ClearButton = () =>
   Widget.Button({
-    onPrimaryClick: () => Notifications.clear(),
-    sensitive: Notifications.bind("notifications").transform((n) => n.length > 0),
+    onClick: () => notifictionsClear(),
+    visible: bind(Notifications, "notifications").as((n) => n.length > 0),
     child: Widget.Box({
       children: [
-        Widget.Label("Clear "),
-        Widget.Icon({
-          icon: Notifications.bind("notifications").transform((n) =>
-            n.length > 0 ? "user-trash-full-symbolic" : "user-trash-symbolic",
-          ),
-        }),
+        Widget.Label({ label: "Clear" }),
+        // Widget.Icon({
+        //   icon: bind(Notifications, "notifications").as((n) =>
+        //     n.length > 0 ? "user-trash-full-symbolic" : "user-trash-symbolic",
+        //   ),
+        // }),
       ],
     }),
   });
@@ -20,16 +27,32 @@ const ClearButton = () =>
 const Header = () =>
   Widget.Box({
     className: "header",
-    children: [Widget.Label({ label: "Notifications", hexpand: true, xalign: 0 }), ClearButton()],
+    halign: Gtk.Align.END,
+    children: [
+      // Widget.Label({ label: "Notifications", hexpand: true, xalign: 0 }),
+      ClearButton(),
+    ],
   });
 
 const NotificationList = () =>
   Widget.Box({
     vertical: true,
     vexpand: false,
-    children: Notifications.bind("notifications").transform((n) =>
-      n.reverse().map(NotificationNoReveal),
-    ),
+    // children: bind(Notifications, "notifications").as((n) => n.reverse().map(NotificationNoReveal)),
+    setup: (self) => {
+      const update = () => {
+        const notifs = Notifications.get_notifications();
+        const newChildren = [];
+
+        for (let i = notifs.length - 1; i >= 0; i--) {
+          const widget = NotificationNoReveal(notifs[i]);
+          if (widget) newChildren.push(widget);
+        }
+        self.children = newChildren;
+      };
+      self.hook(Notifications, "notify::notifications", update);
+      update();
+    },
   });
 
 const Placeholder = () =>
@@ -41,9 +64,9 @@ const Placeholder = () =>
     hpack: "center",
     children: [
       // Widget.Icon("notifications-disabled-symbolic"),
-      Widget.Label("No notifications"),
+      Widget.Label({ label: "No notifications", vexpand: true }),
     ],
-    visible: Notifications.bind("notifications").transform((n) => n.length === 0),
+    visible: bind(Notifications, "notifications").as((n) => n.length === 0),
   });
 
 export default () =>
@@ -52,7 +75,6 @@ export default () =>
     vexpand: true,
     vertical: true,
     children: [
-      Header(),
       Placeholder(),
       Widget.Scrollable({
         vexpand: true,
@@ -64,7 +86,8 @@ export default () =>
           vertical: true,
           children: [NotificationList()],
         }),
-        visible: Notifications.bind("notifications").transform((n) => n.length > 0),
+        visible: bind(Notifications, "notifications").as((n) => n.length > 0),
       }),
+      Header(),
     ],
   });

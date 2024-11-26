@@ -1,9 +1,9 @@
+import { App, Astal } from "astal/gtk3";
 import { launchApp } from "../helpers/Misc.js";
 import icons from "../icons.js";
-import { App, Utils, Widget } from "../imports.js";
+import { Gtk, Widget } from "../imports.js";
 
-/** @param {import('resource:///com/github/Aylur/ags/service/applications.js').Application} app */
-export default (app) => {
+export default (app, pinIndex = -1) => {
   const title = Widget.Label({
     className: "title",
     label: app.name,
@@ -12,8 +12,8 @@ export default (app) => {
   });
 
   const icon = Widget.Icon({
-    icon: Utils.lookUpIcon(app.icon_name || "") ? app.icon_name || "" : icons.apps.fallback,
-    size: 48,
+    icon: Astal.Icon.lookup_icon(app.iconName || "") ? app.iconName || "" : icons.apps.fallback,
+    css: "font-size: 48px;",
   });
 
   const textBox = Widget.Box({
@@ -22,21 +22,24 @@ export default (app) => {
     children: [title],
   });
 
-  return Widget.Button({
-    className: "app-item",
-    tooltipText: app.name,
-    setup: (self) => {
-      self.app = app;
-    },
-    onClicked: () => {
-      App.closeWindow("launcher");
-      launchApp(app);
-    },
-    child: Widget.Box({
-      className: "box",
-      vertical: true,
-      vpack: "center",
-      children: [icon, textBox],
+  return Widget.FlowBoxChild({
+    app,
+    pinIndex,
+    score: 0,
+    child: Widget.Button({
+      className: "app-item",
+      // tooltipText: app.description,
+      onClicked: () => {
+        App.get_window("launcher").visible = false;
+        launchApp(app);
+      },
+      canFocus: false,
+      child: Widget.Box({
+        className: "box",
+        vertical: true,
+        valign: Gtk.Align.CENTER,
+        children: [icon, textBox],
+      }),
     }),
   });
 };

@@ -1,16 +1,15 @@
+import { Variable } from "astal";
+import { App, Astal } from "astal/gtk3";
 import icons from "../icons.js";
-import App from "resource:///com/github/Aylur/ags/app.js";
-import * as Utils from "resource:///com/github/Aylur/ags/utils.js";
-import Variable from "resource:///com/github/Aylur/ags/variable.js";
-import Widget from "resource:///com/github/Aylur/ags/widget.js";
+import { Widget } from "../imports.js";
 
 /** name of the currently opened menu  */
 export const opened = Variable("");
-App.connect("window-toggled", (_, name, visible) => {
-  if (name === "dashboard" && !visible)
-    Utils.timeout(500, () => {
-      opened.value = "";
-    });
+App.connect("window-toggled", (_, win) => {
+  if (win.name === "dashboard" && !win.visible)
+    setTimeout(() => {
+      opened.set("");
+    }, 500);
 });
 
 /**
@@ -26,21 +25,21 @@ export const Arrow = (name, activate) => {
       icon: icons.ui.arrow.right,
       setup: (self) => {
         self.hook(opened, (icon) => {
-          if ((opened.value === name && !iconOpened) || (opened.value !== name && iconOpened)) {
-            const step = opened.value === name ? 10 : -10;
+          if ((opened.get() === name && !iconOpened) || (opened.get() !== name && iconOpened)) {
+            const step = opened.get() === name ? 10 : -10;
             iconOpened = !iconOpened;
             for (let i = 0; i < 9; ++i) {
-              Utils.timeout(15 * i, () => {
+              setTimeout(() => {
                 deg += step;
-                icon.setCss(`-gtk-icon-transform: rotate(${deg}deg);`);
-              });
+                icon.css = `-gtk-icon-transform: rotate(${deg}deg);`;
+              }, 15 * i);
             }
           }
         });
       },
     }),
-    onClicked: () => {
-      opened.value = opened.value === name ? "" : name;
+    onClick: () => {
+      opened.set(opened.get() === name ? "" : name);
       if (typeof activate === "function") activate();
     },
   });
@@ -82,7 +81,7 @@ export const ArrowToggleButton = ({
         onClicked: () => {
           if (condition()) {
             deactivate();
-            if (opened.value === name) opened.value = "";
+            if (opened.get() === name) opened.set("");
           } else {
             activate();
           }
@@ -102,9 +101,9 @@ export const ArrowToggleButton = ({
 export const Menu = ({ name, icon, title, content }) =>
   Widget.Revealer({
     transition: "slide_down",
-    revealChild: opened.bind().transform((v) => v === name),
+    revealChild: opened((v) => v === name),
     child: Widget.Box({
-      classNames: ["menu", name],
+      className: `menu ${name}`,
       vertical: true,
       children: [
         Widget.Box({

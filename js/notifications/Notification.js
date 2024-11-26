@@ -1,33 +1,35 @@
+import { App, Astal } from "astal/gtk3";
 import icons from "../icons.js";
-import { Utils, Widget } from "../imports.js";
+import { Widget } from "../imports.js";
 import GLib from "gi://GLib";
 
-const NotificationIcon = ({ appEntry, appIcon, image }) => {
-  if (image) {
-    return Widget.Box({
-      vpack: "start",
-      hexpand: false,
-      className: "icon img",
-      children: [],
-      css: `background-image: url("${image}");
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-position: center;`,
-    });
-  }
+const NotificationIcon = (n) => {
+  // if (n.image) {
+  //   return Widget.Box({
+  //     vpack: "start",
+  //     hexpand: false,
+  //     className: "icon img",
+  //     children: [],
+  //     css: `background-image: url("${n.image}");
+  //           background-size: cover;
+  //           background-repeat: no-repeat;
+  //           background-position: center;`,
+  //   });
+  // }
 
   let icon = "dialog-information-symbolic";
-  if (Utils.lookUpIcon(appIcon)) icon = appIcon;
+  if (n.image) icon = n.image;
+  if (n.appIcon) icon = n.appIcon;
 
-  if (Utils.lookUpIcon(appEntry)) icon = appEntry;
+  // if (Astal.Icon.lookup_icon(appEntry)) icon = appEntry;
 
   return Widget.Box({
-    vpack: "start",
+    // vpack: "start",
     hexpand: false,
     className: "icon",
     child: Widget.Icon({
       icon,
-      size: 58,
+      // size: 78,
       hpack: "center",
       hexpand: true,
       vpack: "center",
@@ -67,9 +69,9 @@ const Notification = (notification) =>
                   Widget.Button({
                     className: "close-button",
                     vpack: "center",
-                    child: Widget.Icon(icons.notifications.close),
+                    child: Widget.Icon({ icon: icons.notifications.close }),
                     onClicked: () => {
-                      notification.close();
+                      notification.dismiss();
                     },
                   }),
                 ],
@@ -84,21 +86,22 @@ const Notification = (notification) =>
                 wrap: true,
                 label: notification.body,
               }),
-              notification.hints.value
-                ? Widget.ProgressBar({
-                    className: "progress",
-                    value: Number(notification.hints.value.unpack()) / 100,
-                  })
-                : Widget.Box(),
+              // TODO fix notif hints
+              // notification.hints.value
+              //   ? Widget.ProgressBar({
+              //       className: "progress",
+              //       value: Number(notification.hints.value.unpack()) / 100,
+              //     })
+              //   : Widget.Box(),
             ],
           }),
         ],
       }),
       Widget.Box({
-        className: notification.actions.length > 0 ? "actions visible" : "actions",
-        children: notification.actions.map((action) =>
+        className: notification.get_actions()?.length > 0 ? "actions visible" : "actions",
+        children: notification.get_actions()?.map((action) =>
           Widget.Button({
-            child: Widget.Label(action.label),
+            child: Widget.Label({ label: action.label }),
             onClicked: () => notification.invoke(action.id),
             hexpand: true,
           }),
@@ -114,9 +117,9 @@ const NotificationReveal = (notification, visible = false) => {
     transition: "slide_left",
     transitionDuration: 200,
     setup: (revealer) => {
-      Utils.timeout(1, () => {
+      setTimeout(() => {
         revealer.revealChild = true;
-      });
+      }, 1);
     },
   });
 
@@ -138,13 +141,13 @@ const NotificationReveal = (notification, visible = false) => {
 
   box.attribute.destroyWithAnims = (shouldClose) => {
     slideLeftRevealer.revealChild = false;
-    Utils.timeout(200, () => {
+    setTimeout(() => {
       slideDownRevealer.revealChild = false;
-      Utils.timeout(200, () => {
+      setTimeout(() => {
         box.destroy();
-        App.closeWindow("popupNotifications");
-      });
-    });
+        App.get_window("popupNotifications").visible = false;
+      }, 200);
+    }, 200);
   };
 
   return box;

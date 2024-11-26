@@ -9,11 +9,11 @@ export default () =>
       children: [
         Widget.Icon({
           className: "icon",
-          icon: Battery.bind("icon_name"),
+          icon: Battery.bind("icon-name"),
         }),
         Widget.Label({
           className: "label",
-          label: Battery.bind("percent").transform((p) => {
+          label: Battery.bind("percent").as((p) => {
             if (p < 10) return `0${p}%`;
             if (p < 100) return `${p}%`;
             return p;

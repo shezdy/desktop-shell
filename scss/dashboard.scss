@@ -11,7 +11,7 @@
     }
 
     &:selected {
-      background-color: transparentize($accent, 0.5);
+      background-color: color.adjust($accent, $alpha: -0.5);
       border-radius: calc($radii / 2);
     }
 
@@ -27,7 +27,7 @@
     }
 
     &:indeterminate {
-      color: transparentize($fg, 0.7);
+      color: color.adjust($fg, $alpha: -0.7);
     }
     font-size: 1.1em;
     padding: 0.2em;

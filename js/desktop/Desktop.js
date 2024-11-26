@@ -1,15 +1,26 @@
-import { App, Widget } from "../imports.js";
+import { App, Astal } from "astal/gtk3";
+import { Widget } from "../imports.js";
 
 export default (monitor, gdkmonitor) =>
   Widget.Window({
     name: `desktop${monitor}`,
     className: "desktop",
-    monitor: gdkmonitor,
-    layer: "background",
-    exclusivity: "ignore",
-    keymode: "none",
-    anchor: ["top", "bottom", "left", "right"],
+    gdkmonitor,
+    layer: Astal.Layer.BACKGROUND,
+    exclusivity: Astal.Exclusivity.IGNORE,
+    keymode: Astal.Keymode.NONE,
+    anchor:
+      Astal.WindowAnchor.TOP |
+      Astal.WindowAnchor.LEFT |
+      Astal.WindowAnchor.RIGHT |
+      Astal.WindowAnchor.BOTTOM,
     child: Widget.EventBox({
-      onSecondaryClick: () => App.openWindow("launcher"),
+      onClick: (self, event) => {
+        switch (event.button) {
+          case 3:
+            App.get_window("launcher").visible = true;
+            break;
+        }
+      },
     }),
   });
