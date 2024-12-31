@@ -51,7 +51,7 @@ export default {
       "localsend",
       "vscodium - wayland",
       "keepassxc",
-      "tor browser",
+      "kasts",
       "qalculate! (qt)",
     ],
   },

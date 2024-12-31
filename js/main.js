@@ -15,6 +15,7 @@ import Confirm from "./widgets/Confirm.js";
 
 const scss = `${SRC}/scss/main.scss`;
 const css = `${SRC}/build/main.css`;
+// TODO: import scss instead of doing this
 try {
   const [_, out, err] = GLib.spawn_command_line_sync(
     `sass --silence-deprecation=mixed-decls ${scss} ${css}`,
@@ -36,8 +37,7 @@ function getGdkMonitor(hyprlandMonitor) {
   const display = Gdk.Display.get_default();
   const screen = display.get_default_screen();
   for (let i = 0; i < display.get_n_monitors(); i++) {
-    if (screen.get_monitor_plug_name(i) === hyprlandMonitor.name)
-      return display.get_monitor(i);
+    if (screen.get_monitor_plug_name(i) === hyprlandMonitor.name) return display.get_monitor(i);
   }
 
   return undefined;
@@ -49,8 +49,10 @@ try {
   exec("pkill kded6");
 } catch {}
 
+globalThis.INSTANCE_NAME = "plantshell";
+
 App.start({
-  instanceName: "plantshell",
+  instanceName: INSTANCE_NAME,
   css: css,
   requestHandler: (request, response) => {
     let res = "ok";
@@ -105,12 +107,8 @@ App.start({
 });
 
 Hyprland.connect("monitor-added", () => {
-  exec(
-    `hyprctl dispatch exec 'sleep 0.5; astal -i plantshell -q ; /home/d/repos/ags/ags run -d ${SRC}'`,
-  );
+  exec(`hyprctl dispatch exec 'sleep 0.5; astal -i ${INSTANCE_NAME} -q ; ags run -d ${SRC}'`);
 });
 Hyprland.connect("monitor-removed", () => {
-  exec(
-    `hyprctl dispatch exec 'sleep 0.5; astal -i plantshell -q ; /home/d/repos/ags/ags run -d ${SRC}'`,
-  );
+  exec(`hyprctl dispatch exec 'sleep 0.5; astal -i ${INSTANCE_NAME} -q ; ags run -d ${SRC}'`);
 });
