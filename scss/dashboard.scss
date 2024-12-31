@@ -1,3 +1,8 @@
+@use "sass:color";
+@use "variables" as *;
+@use "common" as *;
+@use "notifications" as *;
+
 @mixin calendar {
   @include widget;
   padding: $spacing * 2 $spacing * 2 0;

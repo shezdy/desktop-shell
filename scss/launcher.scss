@@ -1,3 +1,7 @@
+@use "sass:color";
+@use "variables" as *;
+@use "common" as *;
+
 $app_size: 128px;
 $scrollbar_width: 10px;
 

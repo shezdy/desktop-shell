@@ -1,3 +1,5 @@
+@use "sass:color";
+
 $grey: #4b485b;
 $mid_grey: #575369;
 $light_grey: #635f77;
@@ -42,3 +44,21 @@ $hover: $surface3;
 $hover_fg: $fg;
 $accent_fg: black;
 $accent: $purple;
+
+$radii: 12px;
+$spacing: 8px;
+$padding: 8px;
+$border_width: 1px;
+$border: solid;
+$active_gradient: linear-gradient(to right, $accent, color.adjust($accent, $lightness: 6%));
+$font_size: 13px;
+$bar_icon_size: 11px;
+$bar_font: "CaskaydiaCove Nerd Font", "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
+$sans_font: "Roboto", "Noto Sans", sans-serif;
+$mono_font: "CaskaydiaCove Nerd Font Mono", monospace;
+
+$dur_short: 100ms;
+$dur_med: 200ms;
+$dur_long: 400ms;
+$md3_emph_decel: cubic-bezier(0.05, 0.7, 0.1, 1);
+$md3_emph_accel: cubic-bezier(0.3, 0, 0.8, 0.15);

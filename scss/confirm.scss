@@ -1,3 +1,6 @@
+@use "variables" as *;
+@use "common" as *;
+
 window#confirm {
   .confirm {
     @include floating_widget;

@@ -1,3 +1,7 @@
+@use "sass:color";
+@use "variables" as *;
+@use "common" as *;
+
 $bar_height: 32px;
 $bar_spacing: 6px;
 $bar_margin_v: 4px;

@@ -1,3 +1,6 @@
+@use "variables" as *;
+@use "common" as *;
+
 window#powermenu {
   .window-content {
     @include floating_widget;
