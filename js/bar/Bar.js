@@ -97,6 +97,7 @@ const Right = () =>
 export default (monitor, gdkmonitor) =>
   Widget.Window({
     name: `bar${monitor}`,
+    namespace: `bar${monitor}`,
     exclusivity: Astal.Exclusivity.EXCLUSIVE,
     gdkmonitor,
     anchor: Astal.WindowAnchor.TOP | Astal.WindowAnchor.LEFT | Astal.WindowAnchor.RIGHT,

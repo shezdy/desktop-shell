@@ -71,8 +71,9 @@ const PopupList = () =>
 export default () =>
   Widget.Window({
     name: "popupNotifications",
+    namespace: "popupNotifications",
     anchor: Astal.WindowAnchor.TOP | Astal.WindowAnchor.RIGHT,
     child: PopupList(),
     layer: Astal.Layer.OVERLAY,
-    visible: true,
+    visible: false,
   });

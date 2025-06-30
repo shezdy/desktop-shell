@@ -40,38 +40,33 @@ const MediaBox = (player) =>
           const name = player.identity;
           if (!name || name.length === 0) return;
 
-          if (name === "Spotify") {
-            Hyprland.message("dispatch focuswindow initialtitle:Spotify");
-            return;
-          }
-
           const regex = `[${name[0].toUpperCase()}${name[0].toLowerCase()}]${name.slice(1)}`;
-          Hyprland.message(`dispatch focuswindow ${regex}`);
+          Hyprland.message(`dispatch focuswindow class:${regex}`);
         },
         className: "cover",
         child: Widget.Box({
           className: "image",
           children: [
             Widget.Icon({
-              icon: "sparkle-symbolic",
+              icon: "a-sparkle-symbolic",
               visible: false,
             }),
           ],
           setup: (self) => {
-            self
-              .hook(player, "notify::cover-art", (self) => {
-                self.children[0].visible = false;
-                self.css = `background-image: url("${player.coverArt}")`;
-              })
-              .hook(player, "notify::art-url", (self) => {
-                if (!player.artUrl || player.artUrl === "") {
-                  self.children[0].visible = true;
-                  self.css = "background-image: none";
-                }
-              });
+            self.hook(player, "notify::cover-art", (self) => {
+              if (!player.coverArt) {
+                self.children[0].visible = true;
+                self.css = "background-image: none";
+                return;
+              }
+              self.children[0].visible = false;
+              self.css = `background-image: url("${player.coverArt}")`;
+            });
             if (player.coverArt) {
               self.children[0].visible = false;
               self.css = `background-image: url("${player.coverArt}")`;
+            } else {
+              self.children[0].visible = true;
             }
           },
         }),

@@ -1,5 +1,6 @@
+import GObject from "gi://GObject";
 import { Variable } from "astal";
-import { App, Astal, astalify } from "astal/gtk3";
+import { App, Astal } from "astal/gtk3";
 import { Gdk, Gtk, Widget } from "../imports.js";
 import Brightness from "../services/Brightness.js";
 import PopupWindow, { closePopupWindow } from "../widgets/PopupWindow.js";
@@ -14,7 +15,6 @@ import {
   SourceSelector,
   VolumeSliderRow,
 } from "./VolumeSettings.js";
-import GObject from "gi://GObject";
 
 const WINDOW_NAME = "dashboard";
 
@@ -85,6 +85,7 @@ const Dashboard = () =>
 export default () =>
   PopupWindow({
     name: WINDOW_NAME,
+    namespace: WINDOW_NAME,
     transition: Gtk.RevealerTransitionType.SLIDE_LEFT,
     location: "right",
     child: Dashboard(),

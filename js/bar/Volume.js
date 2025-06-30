@@ -16,40 +16,39 @@ export default () =>
       }
     },
     onScroll: (self, event) => {
-      if (event.delta_y < 0) Audio.defaultSpeaker.volume += 0.05;
-      else Audio.defaultSpeaker.volume -= 0.05;
+      if (event.delta_y < 0) {
+        if (Audio.defaultSpeaker.volume >= 0.95) Audio.defaultSpeaker.volume = 1;
+        else Audio.defaultSpeaker.volume += 0.05;
+      } else {
+        if (Audio.defaultSpeaker.volume <= 0.05) Audio.defaultSpeaker.volume = 0;
+        else Audio.defaultSpeaker.volume -= 0.05;
+      }
     },
     child: Widget.Box({
       vpack: "fill",
+      setup: (self) => {
+        self.hook(Audio.defaultSpeaker, "notify::mute", () =>
+          Audio.defaultSpeaker.notify("volume"),
+        );
+      },
       children: [
         Widget.Icon({
           className: "icon",
-          setup: (self) => {
-            const update = () => {
-              if (!Audio.defaultSpeaker) return;
-              const vol = Math.ceil(Audio.defaultSpeaker.volume * 100);
+          icon: bind(Audio.defaultSpeaker, "volume").as((v) => {
+            const vol = Math.round(v * 100);
 
-              let icon = "high";
-              if (vol <= 0 || Audio.defaultSpeaker.mute) icon = "muted";
-              else if (vol < 35) icon = "medium";
-              else if (vol > 100) icon = "overamplified";
+            let icon = "high";
+            if (vol <= 0 || Audio.defaultSpeaker.mute) icon = "muted";
+            else if (vol < 35) icon = "medium";
+            else if (vol > 100) icon = "overamplified";
 
-              self.icon = `audio-volume-${icon}-symbolic`;
-            };
-
-            self.hook(Audio.defaultSpeaker, "notify::volume", update);
-            self.hook(Audio.defaultSpeaker, "notify::mute", update);
-            update();
-          },
+            return `audio-volume-${icon}-symbolic`;
+          }),
         }),
         Widget.Label({
           className: "label",
           label: bind(Audio.defaultSpeaker, "volume").as((v) => {
-            const vol = Math.ceil(v * 100);
-            // if (vol <= 0) self.label = "󰖁 ";
-            // else if (vol < 10) self.label = `󰕾 0${vol}%`;
-            // else if (vol < 100) self.label = `󰕾 ${vol}%`;
-            // else self.label = `󰕾 ${vol}`;
+            const vol = Math.round(v * 100);
             if (vol <= 0 || Audio.defaultSpeaker.mute) return "00%";
             if (vol < 10) return `0${vol}%`;
             if (vol < 100) return `${vol}%`;

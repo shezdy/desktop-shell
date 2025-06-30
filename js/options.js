@@ -1,6 +1,5 @@
 export default {
-  // TODO: get actual username
-  avatar: "/var/lib/AccountsService/icons/d",
+  avatar: `/var/lib/AccountsService/icons/${USER}`,
   mpris: {
     // the special name "%any" can be used to match any player not on the list
     // players listed earlier will have more priority, so for example:
@@ -40,7 +39,7 @@ export default {
     pins: [
       "dolphin",
       "spotify",
-      "webcord",
+      "vesktop",
       "firefox",
       "librewolf",
       "brave",

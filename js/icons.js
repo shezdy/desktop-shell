@@ -1,6 +1,6 @@
 export default {
-  settings: "emblem-system-symbolic",
-  sparkle: "sparkle-symbolic",
+  settings: "applications-system-symbolic",
+  sparkle: "a-sparkle-symbolic",
   tick: "object-select-symbolic",
   audio: {
     mic: {
@@ -22,7 +22,7 @@ export default {
       speaker: "audio-speakers-symbolic",
       card: "audio-card-symbolic",
     },
-    mixer: "mixer-symbolic",
+    mixer: "a-mixer-symbolic",
     generic: "audio-x-generic-symbolic",
   },
   powermode: {
@@ -58,12 +58,11 @@ export default {
     low: "󰃞",
   },
   powermenu: {
-    suspend: "weather-clear-night-symbolic",
-    // reboot: "system-reboot-symbolic",
-    reboot: "emblem-synchronizing-symbolic",
-    logout: "system-log-out-symbolic",
-    shutdown: "system-shutdown-symbolic",
-    lock: "system-lock-screen-symbolic",
+    suspend: "a-suspend-symbolic",
+    reboot: "a-reboot-symbolic",
+    logout: "a-logout-symbolic",
+    shutdown: "a-shutdown-symbolic",
+    lock: "a-lock-symbolic",
   },
   recorder: {
     recording: "media-record-symbolic",
@@ -115,10 +114,10 @@ export default {
   },
   network: {
     wired: {
-      connected: "network-wired-symbolic",
-      portal: "network-wired-acquiring-symbolic",
-      limited: "network-wired-no-route-symbolic",
-      disconnected: "network-wired-acquiring-symbolic",
+      connected: "a-network-wired-symbolic",
+      portal: "a-network-wired-acquiring-symbolic",
+      limited: "a-network-wired-no-route-symbolic",
+      disconnected: "a-network-wired-acquiring-symbolic",
     },
   },
 };

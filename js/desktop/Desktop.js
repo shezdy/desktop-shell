@@ -4,6 +4,7 @@ import { Widget } from "../imports.js";
 export default (monitor, gdkmonitor) =>
   Widget.Window({
     name: `desktop${monitor}`,
+    namespace: `desktop${monitor}`,
     className: "desktop",
     gdkmonitor,
     layer: Astal.Layer.BACKGROUND,

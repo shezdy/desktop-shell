@@ -6,6 +6,7 @@ import { Applications, Hyprland } from "../imports.js";
 const iconSubs = {
   "Spotify Premium": "com.spotify.Client",
   Joplin: "@joplinapp-desktop",
+  "FINAL FANTASY XIV": "xivlauncher",
 };
 
 export function execSh(cmd) {
@@ -38,6 +39,7 @@ export function getHyprlandClientIcon(client) {
     icon = Applications.exact_query(client.initialTitle)[0]?.iconName;
 
   icon = iconSubs[client.initialTitle] || icon;
+  if (!icon) return icons.apps.fallback;
   return Astal.Icon.lookup_icon(icon) ? icon : icons.apps.fallback;
 }
 

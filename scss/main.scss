@@ -63,6 +63,7 @@ window.popup {
       border-radius: $radii;
       padding: 3px 16px;
       label {
+        font-family: $sans_font;
         font-weight: 500;
         font-size: 12px;
       }
