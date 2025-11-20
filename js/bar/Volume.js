@@ -24,6 +24,11 @@ export default () =>
         else Audio.defaultSpeaker.volume -= 0.05;
       }
     },
+    setup: (self) => {
+      self.hook(Audio.defaultMicrophone, "notify::mute", () =>
+        self.toggleClassName("mic-muted", Audio.defaultMicrophone.mute),
+      );
+    },
     child: Widget.Box({
       vpack: "fill",
       setup: (self) => {

@@ -234,6 +234,9 @@ $bar_button_background_hover: false;
 
   .volume {
     color: $green;
+    &.mic-muted {
+      color: $red;
+    }
     padding: 0 $bar_spacing;
     icon {
       font-size: $bar_icon_size;

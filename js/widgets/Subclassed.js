@@ -1,5 +1,5 @@
-import { Gdk, Gtk, Widget, astalify } from "astal/gtk3";
 import GObject from "gi://GObject";
+import { Gdk, Gtk, Widget, astalify } from "astal/gtk3";
 
 export class Calendar extends astalify(Gtk.Calendar) {
   static {
@@ -44,6 +44,16 @@ export class Menu extends astalify(Gtk.Menu) {
 export class MenuItem extends astalify(Gtk.MenuItem) {
   static {
     GObject.registerClass(MenuItem);
+  }
+
+  constructor(props) {
+    super(props || {});
+  }
+}
+
+export class PopoverMenu extends astalify(Gtk.PopoverMenu) {
+  static {
+    GObject.registerClass(PopoverMenu);
   }
 
   constructor(props) {

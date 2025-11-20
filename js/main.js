@@ -107,8 +107,12 @@ App.start({
 });
 
 Hyprland.connect("monitor-added", () => {
-  exec(`hyprctl dispatch exec 'sleep 0.5; astal -i ${INSTANCE_NAME} -q ; ags run -d ${SRC}'`);
+  Hyprland.message(
+    `dispatch exec sleep 0.5; astal -i ${INSTANCE_NAME} -q ; ags run -d ${SRC} --gtk 3`,
+  );
 });
 Hyprland.connect("monitor-removed", () => {
-  exec(`hyprctl dispatch exec 'sleep 0.5; astal -i ${INSTANCE_NAME} -q ; ags run -d ${SRC}'`);
+  Hyprland.message(
+    `dispatch exec sleep 0.5; astal -i ${INSTANCE_NAME} -q ; ags run -d ${SRC} --gtk 3`,
+  );
 });

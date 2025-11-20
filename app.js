@@ -1,2 +1,2 @@
-const config = (await import("./js/main.js")).default;
-export default config;
+const main = (await import("./js/main.js")).default;
+export default main;

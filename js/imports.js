@@ -1,5 +1,3 @@
-import { Widget as W } from "astal/gtk3";
-import { Calendar, FlowBox, FlowBoxChild, Menu, MenuItem, Separator } from "./widgets/Subclassed";
 import Apps from "gi://AstalApps";
 import Hyprland from "gi://AstalHyprland";
 // import Battery from "resource:///com/github/Aylur/ags/service/battery.js";
@@ -13,6 +11,16 @@ import GLib from "gi://GLib";
 import Gdk from "gi://Gdk?version=3.0";
 import Gio from "gi://Gio";
 import Gtk from "gi://Gtk";
+import { Widget as W } from "astal/gtk3";
+import {
+  Calendar,
+  FlowBox,
+  FlowBoxChild,
+  Menu,
+  MenuItem,
+  PopoverMenu,
+  Separator,
+} from "./widgets/Subclassed";
 
 const apps = new Apps.Apps({
   nameMultiplier: 2,
@@ -37,6 +45,7 @@ Widget.FlowBox = (props) => new FlowBox(props);
 Widget.FlowBoxChild = (props) => new FlowBoxChild(props);
 Widget.Menu = (props) => new Menu(props);
 Widget.MenuItem = (props) => new MenuItem(props);
+Widget.PopoverMenu = (props) => new PopoverMenu(props);
 Widget.Separator = (props) => new Separator(props);
 
 export {
