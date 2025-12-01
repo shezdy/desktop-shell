@@ -1,0 +1,64 @@
+@use "sass:color";
+
+$grey: #4b485b;
+$mid_grey: #575369;
+$light_grey: #656374;
+
+$red: #ff87a5;
+$pink: #eda4ca;
+$dark_red: #ff698e;
+
+$green: #9ce69c;
+$light_green: #b0ebb0;
+$dark_green: #87e287;
+
+$orange: #ffbd94;
+$yellow: #f2d48d;
+$dark_orange: #ffaa75;
+
+$blue: #82acff;
+$light_blue: #a1c3ff;
+$dark_blue: #699bff;
+
+$purple: #b7a3ff;
+$light_purple: #c9b8ff;
+$dark_purple: #a38aff;
+
+$cyan: #62c8d4;
+$light_cyan: #75e0e6;
+$dark_cyan: #5cc0c7;
+
+$fg: #dddddd;
+$fg_dark: #bbbbbb;
+$bg_dark: #0b0a0d;
+$bg: #151418;
+$surface0: #19171f;
+$surface1: #222027;
+$surface2: #2e2c35;
+$surface3: #3a3941;
+$surface4: $grey;
+
+$shadow_color: #00000040;
+$border_color: $surface1;
+$hover: $surface3;
+$hover_fg: $fg;
+$accent_fg: black;
+$accent: $purple;
+
+$radii: 12px;
+$spacing: 8px;
+$padding: 8px;
+$border_width: 1px;
+$border: solid;
+$active_gradient: linear-gradient(to right, $accent, color.adjust($accent, $lightness: 6%));
+$font_size: 10pt;
+$bar_icon_size: 11px;
+$bar_font: "CaskaydiaCove Nerd Font", "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
+$sans_font: "Inter", "Roboto", "Noto Sans", sans-serif;
+$mono_font: "CaskaydiaCove Nerd Font Mono", monospace;
+
+$dur_short: 100ms;
+$dur_med: 200ms;
+$dur_long: 400ms;
+$md3_emph_decel: cubic-bezier(0.05, 0.7, 0.1, 1);
+$md3_emph_accel: cubic-bezier(0.3, 0, 0.8, 0.15);

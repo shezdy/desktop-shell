@@ -1,0 +1,412 @@
+@use "sass:color";
+@use "variables" as *;
+@use "common" as *;
+@use "notifications" as *;
+
+@mixin calendar {
+  @include widget;
+
+  header {
+    button {
+      @include button($flat: true);
+      margin: 4px;
+    }
+    margin: $spacing * 1.5;
+    margin-bottom: 0;
+  }
+
+  grid {
+    margin: $spacing * 1.5;
+    margin-top: 0;
+    label {
+      padding: 4px 0;
+    }
+    .other-month {
+      color: $light_grey;
+    }
+    .today {
+      background-color: color.adjust($accent, $alpha: -0.5);
+      border-radius: 6px;
+    }
+    .day-name {
+      color: $accent;
+    }
+  }
+
+  &.button {
+    @include button($flat: true);
+    margin: 1em;
+  }
+
+  &:selected {
+    background-color: color.adjust($accent, $alpha: -0.5);
+    border-radius: calc($radii / 2);
+  }
+
+  &.header {
+    background-color: transparent;
+    border: none;
+    color: $fg;
+  }
+
+  &.highlight {
+    background-color: transparent;
+    color: $accent;
+  }
+
+  &:indeterminate {
+    color: color.adjust($fg, $alpha: -0.7);
+  }
+  font-size: 1.1em;
+  padding: 0.2em;
+}
+
+window#dashboard .dashboard {
+  @include floating_widget;
+  * {
+    font-family: $sans_font;
+  }
+  min-width: 330px;
+
+  separator {
+    // background-color: $border_color;
+    background-color: transparent;
+    min-width: 1px;
+    min-height: 1px;
+    border-radius: $radii;
+    margin: calc($spacing/2) 0;
+  }
+
+  .notifications {
+    // min-width: 330px;
+
+    .notification-header {
+      margin-top: $spacing;
+
+      button {
+        @include button;
+        padding: calc($spacing / 2) $spacing;
+      }
+    }
+
+    .notification-scrollable {
+      @include scrollable;
+
+      .notification {
+        @include notification;
+        @include widget;
+        margin: calc($spacing / 2) 0;
+        padding: $spacing;
+
+        .actions {
+          button {
+            background-color: $surface2;
+          }
+        }
+      }
+    }
+
+    .placeholder {
+      color: $fg;
+      image {
+        font-size: 6em;
+      }
+      label {
+        margin-top: 1em;
+        font-size: 1em;
+      }
+    }
+  }
+
+  .clock {
+    color: $fg;
+    font-size: 5em;
+  }
+
+  .header {
+    separator {
+      background-color: $bg;
+      min-width: $spacing;
+      min-height: 1px;
+    }
+    // background-color: green;
+  }
+
+  .system-box {
+    // @include widget;
+    // @include spacing($rec: true);
+
+    // padding: $padding;
+    // background-color: green;
+
+    .uptime {
+      // &.uptime {
+      //   @include button($flat: false, $hoverable: false, $reactive: false);
+      // }
+      margin-left: $spacing;
+      @if $radii == 0 {
+        border-radius: 0;
+      } @else {
+        border-radius: 1.5em;
+      }
+      padding: calc($padding/2);
+      font-size: 20px;
+      image {
+        font-size: 1em;
+      }
+    }
+
+    button {
+      @include button($flat: false);
+      // &.uptime {
+      //   @include button($flat: false, $hoverable: false, $reactive: false);
+      // }
+      @if $radii == 0 {
+        border-radius: 0;
+      } @else {
+        border-radius: 50%;
+      }
+      // background-color: $surface2;
+      font-size: 1.2em;
+      min-width: 40px;
+      image {
+        font-size: 1em;
+      }
+    }
+  }
+
+  .avatar {
+    @include widget;
+    border-radius: 100%;
+    background-repeat: no-repeat;
+    background-size: contain;
+    border-radius: 50%;
+    // min-height: 50px;
+    // min-width: 50px;
+  }
+
+  .quick-settings {
+    @include spacing();
+    button {
+      @if $radii == 0 {
+        border-radius: 0;
+      } @else {
+        border-radius: 1.5em;
+      }
+    }
+
+    .quick-tiles {
+      @include widget;
+      @include spacing($rec: true);
+      // padding: $padding;
+      background-color: transparent;
+
+      button {
+        @include button($flat: false);
+        @if $radii == 0 {
+          border-radius: 0;
+        } @else {
+          border-radius: 1.5em;
+        }
+        background-color: $surface1;
+        padding: 0 $padding * 1.5;
+        // font-size: 1.2rem;
+        min-height: 50px;
+        > box {
+          padding-left: calc($padding/2);
+        }
+        label {
+          font-size: $font_size;
+        }
+        image {
+          font-size: 1em;
+        }
+        .font-icon {
+          font-family: $mono_font;
+          font-size: 2rem;
+        }
+        .opensnitch {
+          font-size: 1.4em;
+        }
+        .open-icon {
+          font-size: 0.85em;
+        }
+        .text-box {
+          label {
+            margin: 0;
+            padding: 0;
+            &.subtext {
+              color: $fg_dark;
+            }
+          }
+        }
+      }
+    }
+
+    .sliders-box {
+      @include widget;
+      @include spacing($rec: true);
+      @include spacing(0);
+      padding: $padding;
+      margin-top: $spacing;
+
+      .brightness-icon,
+      button {
+        @include button($flat: true);
+        padding: calc($padding / 2) $padding;
+
+        &.arrow {
+          padding: calc($padding / 2);
+
+          @keyframes activate_opened {
+            from {
+              -gtk-icon-transform: rotate(0deg);
+            }
+            to {
+              -gtk-icon-transform: rotate(90deg);
+            }
+          }
+
+          @keyframes deactivate_opened {
+            from {
+              -gtk-icon-transform: rotate(90deg);
+            }
+            to {
+              -gtk-icon-transform: rotate(0deg);
+            }
+          }
+          image {
+            animation: deactivate_opened $dur_short ease;
+            -gtk-icon-transform: rotate(0deg);
+            &.opened {
+              animation: activate_opened $dur_short ease;
+              -gtk-icon-transform: rotate(90deg);
+            }
+          }
+        }
+      }
+
+      scale {
+        @include slider;
+        margin-left: $spacing * -0.5;
+      }
+
+      .menu {
+        margin: $spacing 0;
+        background-color: $bg;
+        separator {
+          background-color: $border_color;
+        }
+      }
+
+      .volume-mixer {
+        separator {
+          background-color: $border_color;
+          margin: calc($spacing/2) 0;
+        }
+        .mixer-item {
+          margin: 0 $spacing $spacing $spacing;
+          scale {
+            @include slider();
+            margin-right: $spacing;
+          }
+          image {
+            margin-right: $spacing;
+          }
+          label {
+            text-transform: capitalize;
+          }
+        }
+      }
+
+      .selected {
+        background-color: $surface2;
+      }
+    }
+  }
+
+  calendar {
+    @include calendar;
+  }
+
+  .row {
+    @include spacing($rec: true);
+  }
+
+  .arrow-opened {
+    color: $light_grey;
+  }
+
+  .menu {
+    @include unset;
+    @include widget;
+    @include spacing($rec: true);
+    background-color: $bg;
+    padding: $padding;
+    margin-top: $spacing;
+    border-radius: $radii;
+
+    .title {
+      @include spacing(0.5);
+      * {
+        font-size: 1em;
+        font-weight: 600;
+      }
+    }
+
+    separator {
+      margin: 0 calc($radii / 2);
+    }
+
+    button {
+      @include button($flat: true);
+      padding: calc($padding / 2) $padding;
+    }
+
+    switch {
+      @include switch;
+    }
+
+    .selected {
+      background-color: $surface2;
+    }
+  }
+
+  .toggle-button {
+    @include button;
+    font-weight: bold;
+
+    .label-box {
+      @include spacing(0.5);
+    }
+
+    button {
+      @include button($flat: true);
+      padding: $padding;
+
+      &:first-child {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+
+      &:last-child {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+    }
+
+    &.active {
+      background-color: $accent;
+
+      label,
+      image {
+        color: $accent-fg;
+      }
+    }
+  }
+
+  .simple-toggle {
+    @include button;
+    padding: $padding;
+  }
+}
