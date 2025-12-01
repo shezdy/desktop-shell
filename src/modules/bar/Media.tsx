@@ -5,6 +5,7 @@ import { Gdk, Gtk } from "ags/gtk4";
 import AstalHyprland from "gi://AstalHyprland?version=0.1";
 
 const mpris = AstalMpris.get_default();
+export let mprisCurrentPlayer: AstalMpris.Player | null
 
 const getPlayer = () => {
   const playerList = mpris.get_players();
@@ -41,7 +42,7 @@ const MediaBox = (player: AstalMpris.Player) => {
           if (!name || name.length === 0) return;
 
           const regex = `[${name[0].toUpperCase()}${name[0].toLowerCase()}]${name.slice(1)}`;
-          if (CURRENT_DESKTOP === "hyprland") {
+          if (options.currentDesktop === "hyprland") {
             AstalHyprland.get_default().message(`dispatch focuswindow class:${regex}`);
           }
         }}
@@ -127,7 +128,7 @@ export default () => {
       <With value={createBinding(mpris, "players")}>
         {(value) => {
           const player = getPlayer();
-          MPRIS_CURRENT_PLAYER = player;
+          mprisCurrentPlayer = player;
           if (!player) {
             return <box visible={false}></box>;
           }

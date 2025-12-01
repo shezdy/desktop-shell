@@ -1,26 +1,27 @@
-import "./earlyinit";
-
 import app from "ags/gtk4/app";
+import { exec } from "ags/process";
+import AstalHyprland from "gi://AstalHyprland?version=0.1";
+import { createBinding, For, This } from "gnim";
+import AltTab, { cycleNext } from "./modules/alttab/AltTab";
 import Bar from "./modules/bar/Bar";
+import { mprisCurrentPlayer } from "./modules/bar/Media";
+import Dashboard from "./modules/dashboard/Dashboard";
 import Desktop from "./modules/desktop/Desktop";
+import AppLauncher from "./modules/launcher/AppLauncher";
 import NotificationPopups from "./modules/notifications/NotificationPopups";
-import scss from "./styles/main.scss";
-import { toggleWindow } from "./utils/utils";
 import PowerMenu from "./modules/powermenu/PowerMenu";
 import PowerMenuConfirm from "./modules/powermenu/PowerMenuConfirm";
-import AppLauncher from "./modules/launcher/AppLauncher";
-import AltTab, { cycleNext } from "./modules/alttab/AltTab";
-import Dashboard from "./modules/dashboard/Dashboard";
-import { createBinding, For, This } from "gnim";
-import AstalHyprland from "gi://AstalHyprland?version=0.1";
+import options from "./options";
+import scss from "./styles/main.scss";
 import { minimizeFocused, restoreClient } from "./utils/hyprland";
-import { exec } from "ags/process";
+import { toggleWindow } from "./utils/utils";
 
 const INSTANCE_NAME = "plantshell";
 app.start({
   instanceName: INSTANCE_NAME,
   gtkTheme: "Adwaita",
   css: scss,
+  icons: `${SRC}/assets`,
   requestHandler: (request, response) => {
     let res = "ok";
 
@@ -35,10 +36,10 @@ app.start({
         toggleWindow("dashboard");
         break;
       case "minimizeClient":
-        if (CURRENT_DESKTOP === "hyprland") minimizeFocused();
+        if (options.currentDesktop === "hyprland") minimizeFocused();
         break;
       case "restoreClient":
-        if (CURRENT_DESKTOP === "hyprland") restoreClient();
+        if (options.currentDesktop === "hyprland") restoreClient();
         break;
       case "altTabStart":
         cycleNext(true);
@@ -47,19 +48,19 @@ app.start({
         cycleNext();
         break;
       case "mprisPlayPause":
-        MPRIS_CURRENT_PLAYER?.play_pause();
+        mprisCurrentPlayer?.play_pause();
         break;
       case "mprisNext":
-        MPRIS_CURRENT_PLAYER?.next();
+        mprisCurrentPlayer?.next();
         break;
       case "mprisPrevious":
-        MPRIS_CURRENT_PLAYER?.previous();
+        mprisCurrentPlayer?.previous();
         break;
       case "mprisVolUp":
-        if (MPRIS_CURRENT_PLAYER) MPRIS_CURRENT_PLAYER.volume += 0.05;
+        if (mprisCurrentPlayer) mprisCurrentPlayer.volume += 0.05;
         break;
       case "mprisVolDown":
-        if (MPRIS_CURRENT_PLAYER) MPRIS_CURRENT_PLAYER.volume -= 0.05;
+        if (mprisCurrentPlayer) mprisCurrentPlayer.volume -= 0.05;
         break;
       default:
         res = "unknown request";
@@ -97,7 +98,7 @@ app.start({
   },
 });
 
-if (CURRENT_DESKTOP === "hyprland") {
+if (options.currentDesktop === "hyprland") {
   const hyprland = AstalHyprland.get_default();
   hyprland.connect("monitor-added", () => {
     hyprland.message(

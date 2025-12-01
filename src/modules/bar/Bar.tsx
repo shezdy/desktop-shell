@@ -11,6 +11,7 @@ import { onCleanup } from "gnim";
 import { openWindow } from "../../utils/utils";
 import AstalHyprland from "gi://AstalHyprland?version=0.1";
 import Battery from "./Battery";
+import options from "../../options";
 
 const LauncherButton = () => {
   return (
@@ -50,7 +51,7 @@ const SysIndicators = () => {
 };
 
 const ConfigErrorIndicator = () => {
-  if (CURRENT_DESKTOP !== "hyprland") return <box></box>;
+  if (options.currentDesktop !== "hyprland") return <box></box>;
   const hyprland = AstalHyprland.get_default();
 
   return (

@@ -1,6 +1,7 @@
 import { Gdk, Gtk } from "ags/gtk4";
 import app from "ags/gtk4/app";
 import GLib from "gi://GLib?version=2.0";
+import options from "../options";
 
 export function toggleClassName(widget: Gtk.Widget | null, cssClass: string, state: boolean) {
   if (!widget) return;
@@ -69,7 +70,7 @@ function parseArgv(cmdline: string): string[] {
 export function launchApp(cmdline: string) {
   if (cmdline.length === 0) return;
 
-  if (CURRENT_DESKTOP === "hyprland" && GLib.find_program_in_path("hyprctl")) {
+  if (options.currentDesktop === "hyprland" && GLib.find_program_in_path("hyprctl")) {
     console.log("launching app with hyprctl");
     GLib.spawn_async(
       null,

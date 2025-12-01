@@ -1,5 +1,9 @@
+import GLib from "gi://GLib?version=2.0";
+
 export default {
-  avatar: `/var/lib/AccountsService/icons/${USER}`,
+  user: GLib.get_user_name(),
+  avatar: `/var/lib/AccountsService/icons/${GLib.get_user_name()}`,
+  currentDesktop: GLib.getenv("XDG_CURRENT_DESKTOP")?.toLowerCase(),
   mpris: {
     // the special name "%any" can be used to match any player not on the list
     // players listed earlier will have more priority, so for example:
